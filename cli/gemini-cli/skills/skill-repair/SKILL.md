@@ -1,52 +1,31 @@
 ---
 name: skill-repair
-description: |
-  Use this to fix and re-install agent skills that have failed installation.
-  This skill provides the necessary context and permissions to surgically update
-  the `manifest.json` after a fix has been applied.
+description: "インストールに失敗したエージェントスキルの修復。修復適用後に `manifest.json` を安全に更新し、スキルの再有効化を行う。"
 license: Apache-2.0
 metadata:
-  version: v1
+  version: v2
   publisher: google
 ---
 
-# Skill Repair Assistant
+# Skill Repair (スキル修復ルール)
 
-You have been tasked with fixing a broken agent skill. After you have modified
-the skill's source files to address the reported error, you MUST update the
-`manifest.json` to reflect that the skill is now repaired.
+インストールやビルドに失敗したエージェントスキルのソースファイルを修正し、`manifest.json` を安全に更新して正常な稼働状態に復元する。
 
-## Skill Context
+## Golden Rule (曖昧性収縮定理)
 
--   **Skill ID**: The unique identifier for the skill (e.g., `my-skill`).
--   **Source Path**: Where the skill's source files are located.
--   **Installed Path**: Where the skill is installed/replicated.
--   **Manifest Path**: The absolute path to the `manifest.json` file.
+`manifest.json` の構造的な破損、または依存関係の競合が深刻で修復方針に曖昧さがある場合は、独自の当てずっぽうなマニフェスト書き換えを行ってはならない (MUST NOT)。必ず修正前のマニフェストおよび関連ファイルのバックアップを保持し、修復不可と判断した場合は元の健全な状態にロールバックして処理を終了しなければならない (MUST)。
 
-## Repair Procedure
+## Stop Rule (散逸停止定理)
 
-1.  **Analyze Error**: Understand the error message provided in the prompt.
-2.  **Fix Installed Path**: Fix the issue at the installed path. Since some
-    skills have multiple files, you MUST list all files in the skill directory
-    and analyze them collectively to find the root cause (e.g., malformed
-    `SKILL.md`, missing resources, or incorrect sub-scripts).
-3.  **Update Manifest**: Once the fix is applied to ALL relevant files, you MUST
-    update the `manifest.json` at the **Manifest Path**.
-    -   Find the entry for the skill ID in the `skills` object.
-    -   Set `"status": "installed"`.
-    -   Clear the `"error"` field (set to `null` or remove it).
-4.  **Verification**: The UI will automatically detect this change and refresh.
+マニフェストファイルの書き込みエラー、またはスキルインストールコマンドの実行エラーが連続して **5回以上** 発生した場合は、マニフェストのさらなる破壊を防ぐため、即座に修復処理を強制停止し、エラーログを要約してオペレータの指示を仰がなければならない (MUST)。
 
-### Manifest Example
+## Task Execution Workflow (最小作用ワークフロー定理)
 
-```json
-{
-  "skills": {
-    "my-skill": {
-      "status": "installed",
-      "disabled": false,
-      "error": null
-    }
-  }
-}
-```
+スキル修復を実行する際、エージェントは以下の手順を厳格に実行しなければならない (MUST)。
+
+1. **エラーログの分析**: プロンプト等から提供されたインストール失敗時のエラーログを読み込み、根本原因を分析する。
+2. **インストールパスのファイル修復**: 該当スキルのインストール先ディレクトリに含まれるすべてのファイル（`SKILL.md`、リソースファイル、スクリプト等）を一覧し、不具合の修正を施す。
+3. **マニフェストファイルの更新**: 修正が成功したのち、**マニフェストパス** に配置されている `manifest.json` を更新する。
+   - 該当するスキル ID のエントリーの `status` を `"installed"` に設定する。
+   - `error` フィールドを `null` にクリアするか、または削除する。
+4. **検証と反映確認**: マニフェストの保存後、システムが更新を正しく検知し、ビルドや読み込みエラーが解消されたか確認する。

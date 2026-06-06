@@ -1,81 +1,34 @@
 ---
 name: managing-python-dependencies
-description: |
-  Ensures proper Python dependency management, avoiding global `pip install` and
-  adhering to project-specific tooling.
-
-  Use this skill if any of the following are true:
-    1. Attempting to run `pip install {package_name}`.
-    2. Python packages or dependencies need to be added or modified.
-    3. Initiating a new Python project.
-    4. Creating a new notebook, even if just using BigQuery cells.
-    5. Generating Python code that includes `import` statements for third-party libraries.
-    6. Before executing Python scripts via the terminal to ensure the correct virtual environment is active.
+description: "Pythonの依存ライブラリ・仮想環境の管理。プロジェクトの推奨ツール（uv）を用いてパッケージの追加・管理を行う。"
 license: Apache-2.0
 metadata:
-  version: v1
+  version: v2
   publisher: google
 ---
 
-# Python Dependency Management Rule
+# Python Dependency Management (Python 依存関係管理ルール)
 
-> [!CAUTION] **BEFORE any `pip install`**: You MUST first detect the project's
-> existing dependency manager and use it correctly. Do NOT override the
-> project's established tooling.
+プロジェクトの Python 依存パッケージの追加・削除・同期を適切に行い、グローバルな環境破壊を防ぐ。
 
-## Dependency Manager Detection
+## Golden Rule (曖昧性収縮定理)
 
-Before installing ANY Python package, check the workspace for these files **in
-priority order**:
+依存パッケージの追加にあたり、パッケージ名や指定バージョンに不確定要素・曖昧さがある場合、またはすでに定義されている依存関係との競合が予測される場合は、独自の推測で適当なバージョンをインストールしてはならない (MUST NOT)。また、推奨されているパッケージマネージャー（`uv`）以外のツール（グローバルな `pip` や `conda` 等）を勝手に使用してはならない (MUST NOT)。必ずユーザーに必要なパッケージとバージョンを確認しなければならない (MUST)。
 
-1.  **Signal:** `uv.lock` or `pyproject.toml` with `[tool.uv]`
-    *   **Tool:** **uv**
-    *   **Install:** `uv add <package>`
-    *   **Setup:** `uv sync`
-2.  **Signal:** `pyproject.toml` with `[tool.poetry]`
-    *   **Tool:** **Poetry**
-    *   **Install:** `poetry add <package>`
-    *   **Setup:** `poetry install`
-3.  **Signal:** `Pipfile`
-    *   **Tool:** **Pipenv**
-    *   **Install:** `pipenv install <package>`
-    *   **Setup:** `pipenv install`
-4.  **Signal:** `environment.yml`
-    *   **Tool:** **Conda**
-    *   **Install:** `conda install <package>`
-    *   **Setup:** `conda env create -f environment.yml`
-5.  **Signal:** `requirements.txt` only
-    *   **Tool:** **venv + pip**
-    *   **Install:** `.venv/bin/pip install <package>`
-    *   **Setup:** `.venv/bin/pip install -r requirements.txt`
-6.  **Signal:** None of the above
-    *   **Tool:** **venv + pip** (default)
-    *   **Install:** `.venv/bin/pip install <package>`
-    *   **Setup:** `.venv/bin/pip install -r requirements.txt`
+## Stop Rule (散逸停止定理)
 
-## Default: venv + pip
+パッケージのダウンロードエラー、ビルドエラー、または依存解決時のコンフリクトエラーが連続して **5回以上** 発生した場合は、環境の不整合を防ぐため即座に処理を停止しなければならない (MUST)。作成中の一時ファイルを削除し、ロックファイルを元の状態（またはバックアップ）に安全にロールバックして異常終了しなければならない (MUST)。
 
-If no dependency manager is detected, use **venv + pip + requirements.txt** as
-the default:
+## Task Execution Workflow (最小作用ワークフロー定理)
 
-```bash
-# Initialize environment
-python3 -m venv .venv
+Python パッケージを操作する際、エージェントは以下の手順を厳格に実行しなければならない (MUST)。
 
-# Add dependencies
-.venv/bin/pip install <package>
+1. **環境の検出 (uv優先)**: プロジェクトルートに `uv.lock` または `pyproject.toml` が存在することを確認し、パッケージマネージャーとして `uv` が使用可能な環境であることを確認する。
+2. **依存関係の追加**: 必要なパッケージおよびバージョンを特定し、`uv add <package>` を用いて安全に依存関係を追加する。
+3. **環境の同期**: `uv sync` を実行し、ローカルの仮想環境（`.venv`）をロックファイルの状態と同期させる。
+4. **不変条件の確認**: `pyproject.toml` および `uv.lock` が正常に更新され、Ruff などの linter や既存のテストコードが正常に動作することを確認する。
 
-# Preserve state
-.venv/bin/pip freeze > requirements.txt
-```
+## 禁止事項
 
-**Rules for venv + pip workflow:**
-
--   Always use `.venv/bin/pip` or `.venv/bin/python` (explicit path).
--   After installing, run: `.venv/bin/pip freeze > requirements.txt`.
--   When setting up: `.venv/bin/pip install -r requirements.txt`.
-
-## Prohibited
-
--   **NEVER** run `pip install` globally
--   **NEVER** override an existing dependency manager with a different one
+- **絶対禁止**: グローバル環境（`pip install` の直接実行など）へのパッケージインストールを行ってはならない (MUST NOT)。
+- **絶対禁止**: プロジェクトですでに確立されている `uv` 以外のパッケージマネージャーを上書き導入してはならない (MUST NOT)。
