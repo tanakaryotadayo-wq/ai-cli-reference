@@ -1,0 +1,50 @@
+[
+  {
+    "target": "/Users/ryota/.gemini/antigravity/scratch/verify_theorems_spec_v7.md",
+    "layer": "L3",
+    "critic_name": "Description Optimization Critic",
+    "severity": "高",
+    "pattern_class": "log_event_naming_inconsistency",
+    "location": "3. 動作安全性 (Safety Rules) (52行目、101行目、117-118行目、123行目)",
+    "title": "ログイベント名（英語キーワード）の命名規則の不整合",
+    "criticism": "【必須】仕様書内で指定されている structlog の event フィールドに渡す英語のキーワード（例: 'HITL_PENDING_APPROVAL' と 'workflow_phase_changed' など）の命名規則が、UPPER_SNAKE_CASE と snake_case で混在しています。外部の監視ツールやCI/CDパイプライン、あるいは親エージェントがこれらのイベントログをトリガーとして動作を分岐させる際、命名規則が不統一であると、正規表現やトリガー条件の記述漏れ、監視漏れといった連携上の致命的な不具合を誘発する恐れがあります。",
+    "improvement": "【必須】ログに出力する event キーの英語キーワードについて、命名規則をアッパーケース・スネークケース（UPPER_SNAKE_CASE）に統一するよう、仕様書の記述を修正してください。",
+    "proposed_fix": "【必須】以下のように event 名を統一する：\n・52行目:\n  event='HITL_PENDING_APPROVAL' (変更なし)\n・101行目:\n  - event キーの値に \"workflow_phase_changed\" を設定し\n  + event キーの値に \"WORKFLOW_PHASE_CHANGED\" を設定し\n・117行目、118行目:\n  - event='recursion_guard_triggered'\n  + event='RECURSION_GUARD_TRIGGERED'\n・123行目:\n  event='SECURITY_VIOLATION_PATH_TRAVERSAL' (変更なし)"
+  },
+  {
+    "target": "/Users/ryota/.gemini/antigravity/scratch/verify_theorems_spec_v7.md",
+    "layer": "L3",
+    "critic_name": "Description Optimization Critic",
+    "severity": "高",
+    "pattern_class": "ambiguous_zero_division_handling",
+    "location": "1. 動作要件 - 定理の統計的検証 (29行目) および データ出力 (49行目)",
+    "title": "「分母が0」の処理条件における説明（Description）の不整合と曖昧さ",
+    "criticism": "【必須】29行目では「分母が0（欠陥検出数ゼロ）の場合は健全な合格とみなし hitl_required=false とする」とされている一方で、49行目では「分母が0となったことが疑われる場合に限り hitl_required=True (HITL確認要求) とする」と定義されています。この記述は同一の「分母が0」という数値条件に対して相反する振る舞いを指示しており、プログラム側で「健全な欠陥ゼロケース」と「データ破損による異常ケース」を識別するための客観的な境界条件（Description）が定義されていません。このため、正常な合格時に誤ってHITL警告が飛び、自動修復パイプラインが不要に停止する等の動作不具合が発生します。",
+    "improvement": "【必須】データ破損が疑われる「分母が0」と、健全なプロジェクト状態としての「分母が0」を明確に区別するための判定ロジック（例：入力ファイルのパースエラー行数やファイルサイズが0などの条件）を仕様書に明記し、曖昧さを排除してください。",
+    "proposed_fix": "【必須】49行目の記述を以下のように修正して条件を明確化する：\n- 「検証において、無効データの多発やデータの破損等、例外的な処理エラーにより「分母が0」となったことが疑われる場合に限り...」\n+ 「検証において、入力データにパースエラー行が1行以上含まれているか、または入力ファイルサイズが0バイトであるなどのデータ破損に起因して「分母が0」となった場合に限り、Markdownレポート内にオペレータの確認必要性を明記し、警告ログを出力すること。」"
+  },
+  {
+    "target": "/Users/ryota/.gemini/antigravity/scratch/verify_theorems_spec_v7.md",
+    "layer": "L3",
+    "critic_name": "Description Optimization Critic",
+    "severity": "中",
+    "pattern_class": "missing_template_definition",
+    "location": "1. 動作要件 - ダメだし (criticism) と 改善点 (improvement) の義務化 (31-39行目)",
+    "title": "criticism および improvement の動的テキスト生成テンプレート仕様の欠落",
+    "criticism": "【必須】仕様書には「事前に定義されたテンプレート文から動的に生成する」と記載されていますが、肝心のテンプレート文の具体的内容や、各メトリクス（検出率、深刻度比率、反例比率）の値とテンプレートとのマッピングルールに関する記述（Description）が完全に欠落しています。これにより記述内容が完全に実装者依存となり、出力の一貫性が失われます。その結果、本スクリプトの出力を読み込んで自動修復（Self-Reflection）を行う後続のAIエージェントが、想定外のテキストフォーマットを受け取ることでパースエラーを起こしたり、適切な自動修復アクションを実行できなくなったりするリスクがあります。",
+    "improvement": "【必須】各定理の検証結果（合格時、および再現性・影響度・反例比率の各メトリクスが未達の場合）における、'criticism' と 'improvement' の具体的なテンプレートテキストまたはテキスト生成ロジックの定義を仕様書に追加してください。",
+    "proposed_fix": "【必須】36行目〜38行目の後に、以下のような具体的なルールを追加する：\n「各定理のステータスに応じた定型テキストの定義:\n- すべての検証基準を達成（合格）した場合:\n  - criticism: 'すべての検証基準を満たしていますが、将来的な仕様変更時の回帰を防止するため、継続的な監視を推奨します。'\n  - improvement: '現在の行動仕様および設計ルールを維持し、定期的な監査を実行してください。'\n- いずれかの基準が未達成（不合格）の場合:\n  - 再現性未達: criticism='定理の再現性基準（30%以上）に達していません。', improvement='対象のルール（例: stop_rule, golden_rule）が定義されていないファイルの割合を減らすため、エージェントの基本指示に該当ルールを明記してください。'\n  - 影響度未達: criticism='検出された欠陥における深刻度（高・致命的）の割合が50%未満です。', improvement='深刻な欠陥の発生を抑えるため、該当する設計レイヤーのバリデーションを強化してください。'\n  - 反例比率超過: criticism='深刻な欠陥が検出されなかったファイル（反例）の割合が10%を超えています。', improvement='例外ケースのハンドリングルールを見直し、反例となる健全なファイルでもルール遵守が徹底されるよう設計を修正してください。'」"
+  },
+  {
+    "target": "/Users/ryota/.gemini/antigravity/scratch/verify_theorems_spec_v7.md",
+    "layer": "L3",
+    "critic_name": "Description Optimization Critic",
+    "severity": "中",
+    "pattern_class": "redundant_escaping_responsibility",
+    "location": "1. 動作要件 - データ出力 (48行目)",
+    "title": "エスケープ処理の個別実装による責務の重複と設計不備",
+    "criticism": "【必須】48行目で「マークダウンの特殊文字の直前にバックスラッシュを挿入してエスケープし、かつ HTML 特殊文字を Python の html.escape を用いて実体参照に置換して無効化すること」と指定されています。しかし、個別の統計検証スクリプトが低レベルなマークダウンやHTMLのエスケープを直接自前実装するのは、共通ユーティリティや専用ライブラリ（Jinja2等）との責務重複（車輪の再発明）です。自前実装によるエスケープ漏れや脆弱性の発生リスクが高まるだけでなく、データ内に含まれる正規のマークダウン表現まで破壊してしまい、レポートの可読性が著しく低下する原因になります。",
+    "improvement": "【必須】テキストエスケープ処理を個別スクリプト内で正規表現などを用いて泥臭く実装するのではなく、安全なマークダウン/HTML生成を行う共通ライブラリの利用を許可するか、あるいはエスケープ処理を専用のテキスト処理モジュールに委譲するように仕様を整理してください。",
+    "proposed_fix": "【必須】48行目の記述を以下のように修正する：\n- 「...マークダウンの特殊文字の直前にバックスラッシュを挿入してエスケープし... HTML 特殊文字を Python の html.escape を用いて...」\n+ 「...レポート生成時に defects.jsonl から取得したテキストデータを埋め込む際は、インジェクション対策として、共通の安全なマークダウン生成ユーティリティ（あるいは Jinja2 などのテンプレートエンジン）の自動エスケープ機能を使用するか、HTML/マークダウンの特殊文字が安全に無効化される共通エスケープ処理を適用すること (MUST)。」"
+  }
+]

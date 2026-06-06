@@ -1,0 +1,98 @@
+[
+  {
+    "target": "/Users/ryota/.gemini/antigravity/scratch/verify_theorems_spec_v8.md",
+    "layer": "L1",
+    "critic_name": "Writing Quality Critic",
+    "severity": "高",
+    "pattern_class": "logical_contradiction",
+    "location": "## 1. 動作要件 (Functional Requirements) -> 定理の統計的検証 (27-28行目)",
+    "title": "影響度検証におけるゼロ除算発生条件の論理的矛盾",
+    "criticism": "27-28行目において「分母が1件以上であるにもかかわらず何らかの理由で計算上のゼロ除算が発生する場合に限り、深刻度比率を 0% として処理し...」と記載されていますが、分母が1件以上であれば数学的にゼロ除算は絶対に発生しません。この矛盾した記述は実装者に混乱を与え、不要な例外処理コードの記述や、本来発生し得ないエラー処理ルートの実装に繋がる危険性があります。",
+    "improvement": "分母が1件以上の場合にはゼロ除算が発生しないことを前提とし、分母が0件の場合の例外処理と、計算結果自体が0%となる場合を明確に区別した記述に修正します。",
+    "proposed_fix": "「ただし、対応する欠陥が1件も検出されていない場合（分母が0）は、後述の「欠陥数ゼロの例外処理」に従って判定し (MUST)、分母が1件以上であるにもかかわらず、深刻度の高い欠陥が検出されず計算上の深刻度比率が0%となった場合は、深刻度比率を0%として処理し、当該定理は基準を満たしていない（不合格）と判定すること (MUST)。」"
+  },
+  {
+    "target": "/Users/ryota/.gemini/antigravity/scratch/verify_theorems_spec_v8.md",
+    "layer": "L1",
+    "critic_name": "Writing Quality Critic",
+    "severity": "高",
+    "pattern_class": "rfc2119_omission_and_inconsistency",
+    "location": "## 2. Task Execution Workflow (実行手順) -> 5. 異常終了時のリカバリ手順 (103-115行目)",
+    "title": "リカバリ手順における RFC 2119 指示表記の欠落と体言止めの不整合",
+    "criticism": "「5. 異常終了時のリカバリ手順」の配下にある具体的な手順（106-115行目）において、他の手順セクション（事前準備、実行コマンド、進捗監視など）とは異なり、各項目に `(MUST)` 表記が完全に欠落しています。また、文末が「〜確認すること (MUST)」ではなく「〜確認する。」「〜修正する。」「〜実行する。」といった体言止めに近い常体になっており、仕様書全体の指示レベルの厳格性が担保されず、オペレータや自動復旧スクリプトが従うべき義務強度が曖昧になっています。",
+    "improvement": "各リカバリ手順に対しても、明確に `(MUST)` 表記を付与し、文末を「〜すること (MUST)」に統一して仕様書の記述整合性を確保します。",
+    "proposed_fix": "以下のように差し替えます。\n```markdown\n    - **終了コード 1（I/Oエラー、セキュリティ違反、無効引数）**:  \n      1) `structlog` のエラーログからエラー原因 of ファイルパスおよびセキュリティバリデーションエラーの内容を確認すること (MUST)。  \n      2) 対象パスが `$APP_DATA_DIR` 等の許可ディレクトリ内にあるか確認すること (MUST)。  \n      3) ディレクトリの書き込み権限や空き容量を修正すること (MUST)。  \n      4) アトミック書き込みの過程でリネーム（置換）に失敗し、既存のレポートファイルが破損または消失した疑いがある場合は、バックアップファイル（`.bak`）から手動で復元（例: `mv report.bak report`）を実行すること (MUST)。  \n    - **終了コード 2（パースエラーしきい値超過）**:  \n      1) ログおよび最終レポート（出力されている場合）の「無効データ」セクションから、エラーとなった行番号と生データを確認すること (MUST)。  \n      2) `defects.jsonl` の該当箇所を修正して JSONL のフォーマットを満たすようにすること (MUST)。  \n    - **終了コード 3（再帰制限超過）**:  \n      1) スクリプトが無限ループや無制限の再起動に陥っていないかログを確認すること (MUST)。  \n      2) 安全を確認した上で、一時ディレクトリのロックファイル `$APP_DATA_DIR/scratch/execution_depth.lock` を手動で削除し、実行カウンタをリセットすること (MUST)。\n```"
+  },
+  {
+    "target": "/Users/ryota/.gemini/antigravity/scratch/verify_theorems_spec_v8.md",
+    "layer": "L1",
+    "critic_name": "Writing Quality Critic",
+    "severity": "高",
+    "pattern_class": "rfc2119_contradiction",
+    "location": "## 3. 動作安全性 (Safety Rules) -> 構造化ログの適用 (121行目)",
+    "title": "「原則として」と「(MUST)」の混用による義務強度の自己矛盾",
+    "criticism": "121行目において「構造化ログ（structlog）の出力チャネルは、原則として標準エラー出力（`sys.stderr`）に統一すること (MUST)。」と記述されています。例外を許容するニュアンスの「原則として」と、例外を許容しない絶対的義務を示す「(MUST)」が同一文内に混用されており、標準エラー出力以外への出力が許されるのかどうかが極めて曖昧です。実装者が勝手な解釈で標準出力等にログを混ぜる原因となり、ログ解析パイプラインの破損を招く恐れがあります。",
+    "improvement": "例外を一切認めない絶対的な義務とする場合は「原則として」を削除し、例外を認める場合はその条件を明記した上で `(SHOULD)` 等に修正します。",
+    "proposed_fix": "「また、構造化ログ（structlog）の出力チャネルは、標準エラー出力（`sys.stderr`）に統一すること (MUST)。」"
+  },
+  {
+    "target": "/Users/ryota/.gemini/antigravity/scratch/verify_theorems_spec_v8.md",
+    "layer": "L1",
+    "critic_name": "Writing Quality Critic",
+    "severity": "中",
+    "pattern_class": "rfc2119_omission",
+    "location": "## 2. Task Execution Workflow (実行手順) -> 3. 実行中進捗の監視 (95行目)",
+    "title": "リトライログ監視手順における RFC 2119 漏れと曖昧な指示",
+    "criticism": "95行目の「もしリトライログ（`event='IO_RETRY_ATTEMPTED'`）が出力された場合は、エラー内容を確認しつつ一時的なI/O回復を待つこと。」という一文において、他の手順と異なり `(MUST)` などの RFC 2119 表記が漏れています。また、「一時的なI/O回復を待つ」という表現はオペレータが手動で無限に待つのか、スクリプトの自動復旧プロセスを静観するのかが不明瞭であり、障害対応時の運用手順に混乱を生みます。",
+    "improvement": "本手順がオペレータの義務であることを示す `(MUST)` を付与し、オペレータの具体的な行動が「スクリプトによる自動リトライ処理の推移（最大5回）を静観する」ことであることを明確にします。",
+    "proposed_fix": "「もしリトライログ（`event='IO_RETRY_ATTEMPTED'`）が出力された場合は、ログに記載されたエラー内容を確認しつつ、スクリプトの指数バックオフによる自動リトライ処理（最大5回）の推移を静観すること (MUST)。」"
+  },
+  {
+    "target": "/Users/ryota/.gemini/antigravity/scratch/verify_theorems_spec_v8.md",
+    "layer": "L1",
+    "critic_name": "Writing Quality Critic",
+    "severity": "中",
+    "pattern_class": "terminology_inconsistency",
+    "location": "全体（101行目、115行目、128行目、139-140行目、141行目、143行目）",
+    "title": "再帰呼び出しガードファイルに関する用語の表記揺れ",
+    "criticism": "同一のファイル `$APP_DATA_DIR/scratch/execution_depth.lock` を指す用語として、「ロックファイル」「実行カウンタファイル」「カウンタファイル」「カウンタファイル（ロックファイル）」が混在しています。用語の不統一は、ドキュメントの可読性を低下させるだけでなく、実装者がこれらを別々のファイルとして設計・実装してしまう誤解を誘発するリスクがあります。",
+    "improvement": "このファイルの役割（排他ロックと実行深度のカウント）を表す統一された用語（例：「排他ロック・カウンタファイル」）を定義し、すべての出現箇所を統一します。",
+    "proposed_fix": "仕様書全体において、`$APP_DATA_DIR/scratch/execution_depth.lock` を指す用語を「排他ロック・カウンタファイル」に統一します。\n- 101行目: 「排他ロック・カウンタファイル `$APP_DATA_DIR/scratch/execution_depth.lock` が正常にデクリメントまたは削除されていることを確認すること (MUST)。」\n- 115行目: 「一時ディレクトリの排他ロック・カウンタファイル `$APP_DATA_DIR/scratch/execution_depth.lock` を手動で削除し、実行カウンタをリセットすること (MUST)。」\n- 128行目: 「排他ロック・カウンタファイルのクリーンアップ処理。」\n- 139-140行目: 「排他ロック・カウンタファイル `$APP_DATA_DIR/scratch/execution_depth.lock` を読み書きモード（新規作成を許可）でオープンし...」\n- 140行目: 「排他ロック・カウンタファイルが残存していても状態が無効...」\n- 141行目: 「排他ロック・カウンタファイルを確実に削除し...」\n- 143行目: 「排他ロック・カウンタファイル（ロックファイル）」を「排他ロック・カウンタファイル」に統一。"
+  },
+  {
+    "target": "/Users/ryota/.gemini/antigravity/scratch/verify_theorems_spec_v8.md",
+    "layer": "L1",
+    "critic_name": "Writing Quality Critic",
+    "severity": "中",
+    "pattern_class": "spelling_inconsistency",
+    "location": "全体（32-33行目、64行目、67行目、73行目、104行目、133-134行目）",
+    "title": "操作者を示す人物ロール名における長音符の表記揺れ",
+    "criticism": "スクリプトを実行・監視する主体として「オペレータ」と「オペレーター」の2種類の表記が混在しています（長音符 `ー` の有無）。文章品質の観点からプロフェッショナルな仕様書として不適切であり、検索性や統一感を損ねます。",
+    "improvement": "「オペレータ」に統一します（IT分野の一般的な表記ルールに合わせるか、プロジェクトの標準に合わせます。ここでは「オペレータ」で統一することとします）。",
+    "proposed_fix": "仕様書全体において、「オペレーター」の記述（73行目など）をすべて「オペレータ」に統一します。\n- 73行目: 「オペレータ/エージェント作業ワークフロー」"
+  },
+  {
+    "target": "/Users/ryota/.gemini/antigravity/scratch/verify_theorems_spec_v8.md",
+    "layer": "L1",
+    "critic_name": "Writing Quality Critic",
+    "severity": "中",
+    "pattern_class": "ambiguous_scope_definition",
+    "location": "## 3. 動作安全性 (Safety Rules) -> パスの動的解決とバリデーション (146-147行目)",
+    "title": "安全な監査対象スコープの定義および表記の曖昧さ",
+    "criticism": "147行目において「事前に定義された「安全な監査対象スコープ（プロジェクトルート等）」」と記載されていますが、「プロジェクトルート等」の「等」が極めて曖昧であり、具体的にどのディレクトリ配下が安全なスコープとして許可されるべきかが不明確です。また、「事前に定義された」とありますが、これがどこで定義されるのか（環境変数なのか設定ファイルなのか等）も記載されていません。これにより、セキュリティ実装の際に開発者によってバリデーション範囲がバラバラになり、セキュリティホールの原因となる可能性があります。",
+    "improvement": "「等」という曖昧な表現を排除し、安全な監査対象スコープが何であるか、またそれがどのように定義されるべきかを具体的に記述します。",
+    "proposed_fix": "「読み取り専用の監査対象ファイル（ソースコード等）のパスについては、プロジェクトルート外の参照を許可する場合でも、シンボリックリンクの解決先（リンク先の実体パス）が、実行時引数や環境変数で指定された安全な監査対象スコープ（例：プロジェクトのルートディレクトリ配下）にあることを厳密に検証することとし (MUST)、...」"
+  },
+  {
+    "target": "/Users/ryota/.gemini/antigravity/scratch/verify_theorems_spec_v8.md",
+    "layer": "L1",
+    "critic_name": "Writing Quality Critic",
+    "severity": "中",
+    "pattern_class": "inconsistent_example",
+    "location": "## 2. Task Execution Workflow (実行手順) -> 5. 異常終了時のリカバリ手順 (109行目)",
+    "title": "リカバリ手順の復元例におけるプレースホルダー名と実際のファイル名の不整合",
+    "criticism": "109行目の「バックアップファイル（`.bak`）から手動で復元（例: `mv report.bak report`）を実行する」という記述において、例として示されている `report.bak` や `report` というファイル名は、本仕様書の他のセクション（55行目や63行目など）で定義されているデフォルトの出力ファイル名 `$APP_DATA_DIR/scratch/theorem_verification_results.md` や `theorem_verification_results.json` などと乖離しています。オペレータがこのコマンド例をそのままコピー＆ペーストして実行した際にファイルが見つからないか、予期せぬファイルを上書き・削除してしまう運用上の二次障害を引き起こすリスクがあります。",
+    "improvement": "復元手順の例として示すファイル名を、仕様書内で定義されている実際のデフォルトファイル名（またはそのプレースホルダー）に修正し、整合性を持たせます。",
+    "proposed_fix": "「バックアップファイル（`.bak`）から手動で復元（例: `mv theorem_verification_results.md.bak theorem_verification_results.md`）を実行すること (MUST)。」"
+  }
+]

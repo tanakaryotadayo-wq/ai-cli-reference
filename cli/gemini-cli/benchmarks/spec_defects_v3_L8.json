@@ -1,0 +1,35 @@
+[
+  {
+    "target": "/Users/ryota/.gemini/antigravity/scratch/verify_theorems_spec_v3.md",
+    "layer": "L8",
+    "critic_name": "Observability Critic",
+    "severity": "高",
+    "pattern_class": "missing_structlog_requirement",
+    "location": "2. Task Execution Workflow (実行手順) 23行目 および 3. 動作安全性 (Safety Rules) 26-27行目",
+    "title": "structlog を用いた構造化ログ適用の明記漏れ",
+    "issue": "グローバルルールで structlog の使用が義務付けられている（MUST）にもかかわらず、仕様書では単に進捗ログを「標準出力に」「エラーログを標準エラー出力に」出力するとあるだけで、構造化ログフレームワークの適用要件や JSON 形式での出力規定が欠落しています。",
+    "proposed_fix": "2.3 の進捗表示および 3. 動作安全性のエラー出力について、以下のように修正・追記する。\n\n「- **構造化ログの適用**: スクリプト内のすべてのログ出力（進捗、デバッグ、エラー）は、`structlog` を使用して構造化 JSON 形式で出力すること (MUST)。標準の `logging` や `print` は使用してはならない (MUST NOT)。」"
+  },
+  {
+    "target": "/Users/ryota/.gemini/antigravity/scratch/verify_theorems_spec_v3.md",
+    "layer": "L8",
+    "critic_name": "Observability Critic",
+    "severity": "中",
+    "pattern_class": "insufficient_execution_tracing",
+    "location": "2. Task Execution Workflow (実行手順) 23行目",
+    "title": "進捗フィードバックおよび実行ステップのトレース要件の脆弱さ",
+    "issue": "進捗表示が `SHOULD`（推奨）となっており、バッチ処理全体の実行状況や進捗の可視化が担保されません。また、88ファイルや jsonl の処理といったループ処理において、個々の実行ステップを診断するためのトレース規定（デバッグログ）が定義されていません。",
+    "proposed_fix": "23行目の「進捗表示」を以下のように修正する。\n\n「- **進捗フィードバックとトレース**: 各処理フェーズ（データ読み込み開始、定理ごとの検証完了、レポート出力完了）において、`structlog` を用いた進捗ログを出力すること (MUST)。また、開発・デバッグ時の診断用として、対象ファイルの処理ごと、または異常レコード検出時の詳細な実行ステップを `DEBUG` レベルのログとして出力できる設計とすること (MUST)。」"
+  },
+  {
+    "target": "/Users/ryota/.gemini/antigravity/scratch/verify_theorems_spec_v3.md",
+    "layer": "L8",
+    "critic_name": "Observability Critic",
+    "severity": "中",
+    "pattern_class": "insufficient_error_diagnostics",
+    "location": "3. 動作安全性 (Safety Rules) 26-27行目",
+    "title": "エラーハンドリング時の診断用コンテキスト情報の規定不足",
+    "issue": "不整合データや I/O エラーの検出時に、エラーログとスタックトレースを出力して異常終了する規定はありますが、デバッグや障害追跡に必要なコンテキスト情報（対象ファイルのパス、エラーが発生した行番号、エラーとなったデータの内容など）をログのコンテキストに付与して出力する要件が指定されていません。",
+    "proposed_fix": "26-27行目の記述に以下を追加・修正する。\n\n「- **エラー時の診断コンテキスト**: 不整合データや I/O エラーにより処理を中断する場合は、エラーのスタックトレースだけでなく、エラーが発生したコンテキスト情報（ファイルパス、行番号、パースエラーとなった生データ等）を `structlog` の引数に含めて `ERROR` または `CRITICAL` レベルで出力すること (MUST)。」"
+  }
+]

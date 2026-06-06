@@ -1,0 +1,57 @@
+[
+  {
+    "target": "/Users/ryota/.gemini/antigravity/scratch/verify_theorems_spec_v3.md",
+    "layer": "L1",
+    "critic_name": "Writing Quality Critic",
+    "severity": "中",
+    "pattern_class": "RFC 2119表記の漏れ",
+    "location": "1. 動作要件 (Functional Requirements) - 定理の自動審査 - 最小作用ワークフロー定理 (12行目)",
+    "title": "最小作用ワークフロー定理の判定要件におけるRFC 2119表記の欠落",
+    "issue": "散逸停止定理および曖昧性収縮定理には「MUST」が明記されている一方、最小作用ワークフロー定理の項目にはRFC 2119の義務定義キーワード（MUST/SHOULD/MAY）が欠落しており、実装時の要件強度が曖昧になっている。",
+    "proposed_fix": "最小作用ワークフロー定理: `missing_execution_workflow` または `missing_workflow` のいずれか一方（あるいは両方）が検出されているファイルを対象とし、論理和（OR）として合算した上で計算すること (MUST)。"
+  },
+  {
+    "target": "/Users/ryota/.gemini/antigravity/scratch/verify_theorems_spec_v3.md",
+    "layer": "L1",
+    "critic_name": "Writing Quality Critic",
+    "severity": "中",
+    "pattern_class": "RFC 2119表記の不整合",
+    "location": "2. Task Execution Workflow (実行手順) - 1番目の項目 (18行目)",
+    "title": "実行手順1におけるRFC 2119表記の位置および修飾対象の曖昧さ",
+    "issue": "文末ではなく文中に `(SHOULD)` と `(MAY)` が記述されており、文構造的にどの動作が `SHOULD` でどの動作が `MAY` であるかの修飾関係が曖昧になっている。",
+    "proposed_fix": "1. 監査対象の全88ファイルのパスリストを、外部の設定ファイル（例: target_files.json）から読み込むか、スクリプトの引数として指定可能な設計とすべきであり (SHOULD)、フォールバックとしてスクリプト内部の定数リストとしての定義を許容する (MAY)。"
+  },
+  {
+    "target": "/Users/ryota/.gemini/antigravity/scratch/verify_theorems_spec_v3.md",
+    "layer": "L1",
+    "critic_name": "Writing Quality Critic",
+    "severity": "高",
+    "pattern_class": "用語揺れ・定義不足",
+    "location": "3. 動作安全性 (Safety Rules) - Golden Rule (26行目)",
+    "title": "入力データのキー名に関する表記の揺れと曖昧さ",
+    "issue": "26行目で「targetパス」という用語が用いられているが、これが入力ファイルである `defects.jsonl` のどのスキーマ属性（キー名）を指しているのかが定義されておらず曖昧である。また、「パスリスト」「対象ファイルリスト」「targetパス」など、ファイルパスを示す用語が混在している。",
+    "proposed_fix": "- **Golden Rule (デフォルト動作)**: データパース時やファイル構築時に予期しない形式のデータ（例：欠陥データにおける対象ファイルパスを示すキー `file` の欠損やスキーマ不整合）を発見した場合、独自の仮定で処理を継続せず、標準エラー出力にエラーログを出力した上で処理を即座に中断（異常終了）すること (MUST)。"
+  },
+  {
+    "target": "/Users/ryota/.gemini/antigravity/scratch/verify_theorems_spec_v3.md",
+    "layer": "L1",
+    "critic_name": "Writing Quality Critic",
+    "severity": "中",
+    "pattern_class": "表現の曖昧さ",
+    "location": "2. Task Execution Workflow (実行手順) - 進捗表示 (23行目)",
+    "title": "進捗表示要件における「データ読み込み」対象の曖昧さ",
+    "issue": "「データ読み込み開始」とあるが、本スクリプトでは「対象ファイルリスト（パスリスト）」と「欠陥データ（defects.jsonl）」の2種類のデータを読み込むため、どちらの読み込み（あるいは両方）を指しているのかが曖昧である。",
+    "proposed_fix": "- **進捗表示**: 各処理フェーズ（設定ファイルおよび欠陥データの読み込み開始、定理ごとの検証完了、レポート出力完了）において、標準出力に進捗ログ（進捗状況とタイムスタンプ）を出力すること (SHOULD)。"
+  },
+  {
+    "target": "/Users/ryota/.gemini/antigravity/scratch/verify_theorems_spec_v3.md",
+    "layer": "L1",
+    "critic_name": "Writing Quality Critic",
+    "severity": "中",
+    "pattern_class": "用語揺れ",
+    "location": "仕様書全体 (15行目, 18行目, 26行目, 27行目等)",
+    "title": "ファイルの入出力操作に関する表現の揺れ",
+    "issue": "ファイル出力に関して、「書き出す」「出力する」「書き込み」「ファイル構築時」といった異なる表現が混在しており、動作の定義が不統一になっている。",
+    "proposed_fix": "全体的に「読み込み (Read)」および「書き込み (Write)」という表現に統一する。たとえば、26行目の「ファイル構築時」は「ファイル書き込み時」に変更し、27行目の「ファイルの読み込みまたは書き込み」と表現を一致させる。"
+  }
+]

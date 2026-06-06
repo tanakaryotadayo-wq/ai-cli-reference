@@ -1,0 +1,35 @@
+[
+  {
+    "target": "/Users/ryota/.gemini/antigravity/scratch/verify_theorems_spec_v4.md",
+    "layer": "L7",
+    "critic_name": "Tool API Critic",
+    "severity": "高",
+    "pattern_class": "insufficient_input_validation",
+    "location": "## 2. Task Execution Workflow (実行手順) 1 (25-30行目)",
+    "title": "コマンドライン引数 `--defects` および `--output` に対するディレクトリトラバーサルおよびパス整合性のバリデーション不足",
+    "issue": "`--targets` に対する存在確認と終了コード 1 での異常終了は定義されていますが、`--defects` や `--output` に対する入力値の検証ルール（パスの妥当性、親ディレクトリの書き込み権限の有無、ディレクトリトラバーサル攻撃を防ぐためのサニタイズなど）が定義されていません。これにより、不正なパスが渡された場合に予期せぬディレクトリへの書き込みや、システム例外によるクラッシュが発生するリスクがあります。",
+    "proposed_fix": "`--defects` や `--output` などのパス引数に対しても、実在する親ディレクトリの検証、書き込み可能性チェック、およびパスサニタイズ（パスがアプリデータディレクトリ等の許可されたベースディレクトリ配下に存在することの検証）を必須とし、無効な場合は終了コード `1` で異常終了する仕様を追加します。"
+  },
+  {
+    "target": "/Users/ryota/.gemini/antigravity/scratch/verify_theorems_spec_v4.md",
+    "layer": "L7",
+    "critic_name": "Tool API Critic",
+    "severity": "中",
+    "pattern_class": "ambiguous_hitl_integration",
+    "location": "## 1. 動作要件 (Functional Requirements) - データ出力 (22行目)",
+    "title": "非インタラクティブ環境におけるHITL確認要求の統合とブロック動作の仕様の曖昧さ",
+    "issue": "「検証において『分母が0』となり反例比率を 0% として処理した定理が存在する場合は、レポート内に人間の確認が必要な旨の警告フラグ（HITL確認要求）を明記し、標準出力でもオペレータに確認を促す警告ログを出力すること (MUST)」とありますが、自動化パイプラインや非インタラクティブ環境（CI/CDや自動エージェントのバックグラウンド実行）において、このHITL警告がプロセスの実行をブロック（一時停止して入力を待つ）するのか、あるいは警告を出力した上でそのまま正常終了とするのかの制御仕様が明確ではありません。",
+    "proposed_fix": "自動実行（非インタラクティブモード）を阻害しないよう、HITL警告検出時もスクリプト自体はブロックせずに処理を完了し（終了コード `0`）、警告状態（`hitl_required: true` などのメタデータ）を出力 JSON およびレポートに記録して後続のワークフロー（Inngest等）に非同期通知する仕様とすることを明記します。"
+  },
+  {
+    "target": "/Users/ryota/.gemini/antigravity/scratch/verify_theorems_spec_v4.md",
+    "layer": "L7",
+    "critic_name": "Tool API Critic",
+    "severity": "中",
+    "pattern_class": "missing_api_rate_limit_and_fallback",
+    "location": "## 3. 動作安全性 (Safety Rules) - Stop Rule (40行目)",
+    "title": "API呼び出しや外部例外に対するレート制限・フォールバックおよびエラーハンドリングの不足",
+    "issue": "ファイルI/Oに対する3回のリトライは定義されていますが、将来的な自動修復（Self-Reflection）時などで外部のLLM APIやAPIサーバーと通信する場合を考慮した、APIレート制限（429 Too Many Requests等）への対処（指数バックオフなど）や、通信タイムアウト時の例外トラップ、およびフォールバック処理の設計が考慮されていません。",
+    "proposed_fix": "将来的なAPI連携やネットワーク通信を伴う処理を視野に入れ、API呼び出し時のネットワーク例外や 429 エラーに対する指数バックオフ付きリトライ（Exponential Backoff）の実装基準、およびタイムアウト時のデフォルト値へのフォールバック設計を「動作安全性」セクションに追記します。"
+  }
+]

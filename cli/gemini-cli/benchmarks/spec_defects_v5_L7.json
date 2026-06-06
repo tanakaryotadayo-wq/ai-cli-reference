@@ -1,0 +1,35 @@
+[
+  {
+    "target": "/Users/ryota/.gemini/antigravity/scratch/verify_theorems_spec_v5.md",
+    "layer": "L7",
+    "critic_name": "Tool API Critic",
+    "severity": "高",
+    "pattern_class": "missing_input_validation",
+    "location": "## 2. Task Execution Workflow (実行手順) 33-38行目",
+    "title": "入力パスおよびデータの厳密なバリデーション定義の不足",
+    "issue": "コマンドライン引数 `--targets` や `--defects` で指定されたファイルのパス存在チェックや読み込み権限、および読み込まれた JSON/JSONL データ自体の構造バリデーション（必須キー `pattern_class`, `severity`, `layer` の存在チェックや型チェック）について明確な要件が定義されていません。これにより、不正なデータ構造や存在しないファイルが指定された際に、スクリプトが初期段階で予期せず例外クラッシュする危険性があります。",
+    "proposed_fix": "2. Task Execution Workflow (実行手順) の「3. パースとマッピング」セクションの前に、以下のようにバリデーション要件を追加する:\n- **引数・パスバリデーション**: 指定された `--targets` および `--defects` のパスが存在し、かつ読み取り可能ファイルであることを実行直後に検証すること (MUST)。無効なパスの場合は終了コード `1` で異常終了すること (MUST)。\n- **データ構造バリデーション**: `defects.jsonl` から読み込んだ各レコードについて、必須フィールド（`pattern_class`, `severity`, `layer`）が存在し、かつ文字列型であることを検証すること (MUST)。必須フィールドが不足しているか型が不正なレコードは無効データとして扱い、「3. 動作安全性」の『Golden Rule』に従って警告ログを出力した上で処理をスキップすること (MUST)。"
+  },
+  {
+    "target": "/Users/ryota/.gemini/antigravity/scratch/verify_theorems_spec_v5.md",
+    "layer": "L7",
+    "critic_name": "Tool API Critic",
+    "severity": "中",
+    "pattern_class": "insecure_temporary_file_rename",
+    "location": "## 1. 動作要件 (Functional Requirements) 21-22行目",
+    "title": "アトミックな一時ファイル置換処理における例外ハンドリングとデバイス境界対策の欠如",
+    "issue": "出力ファイル（レポートおよび JSON）をアトミックにリネーム置換する際、一時ファイルを作成するディレクトリが指定されていません。一時ファイルと出力先ファイルが異なるファイルシステム（マウントされたボリュームなど）を跨ぐ場合、`os.rename` が `EXDEV` エラー (Invalid cross-device link) で失敗するリスクがあります。また、リネーム操作時の OS レベルの例外に対するトラップと安全なフォールバック処理が定義されていません。",
+    "proposed_fix": "「1. 動作要件 (Functional Requirements)」の「データ出力」セクション内のアトミックリネームに関する規定を以下のように修正・具体化する:\n- 出力ファイル（`.md` および `.json`）の書き出しを行う際は、必ず出力先ターゲットファイルと「同一ディレクトリ」内に一時ファイルを作成すること (MUST)。書き込み成功後、アトミックにリネーム（置換）する処理を実行すること (MUST)。\n- デバイス境界エラーやアクセス権エラー（`OSError`, `PermissionError`）などのリネーム例外を適切にトラップ（キャッチ）し、リネームが失敗した場合は、一時ファイルを削除した上で、既存のファイルを破損させないよう安全に処理をフォールバックし、`structlog` でエラーログを出力して終了コード `1` で終了すること (MUST)。"
+  },
+  {
+    "target": "/Users/ryota/.gemini/antigravity/scratch/verify_theorems_spec_v5.md",
+    "layer": "L7",
+    "critic_name": "Tool API Critic",
+    "severity": "高",
+    "pattern_class": "missing_hitl_integration_interface",
+    "location": "## 1. 動作要件 (Functional Requirements) 23-26行目",
+    "title": "HITL（確認・承認）発生時の後続パイプライン統合・再開インターフェースの欠落",
+    "issue": "「分母が0」などの場合に `hitl_required` フラグを `true` に設定して後続の自動修復パイプラインを一時停止する仕様となっていますが、人間が確認・承認を行った後にパイプラインやスクリプトを再実行して「HITL要求をバイパス（承認済みとして完了）」させるための統合インターフェース（例えば `--approve-hitl` 引数など）が定義されていません。このため、一度 `hitl_required` が `true` になると、システムが永久に停止するか、手動でコードを書き換えるまで処理を再開できない恐れがあります。",
+    "proposed_fix": "「1. 動作要件 (Functional Requirements)」の「データ出力」セクションの HITL 規定に以下を追加する:\n- スクリプトは、人間が確認および承認を完了したことを示すコマンドライン引数 `--approve-hitl` を受け付ける設計とすること (MUST)。\n- `--approve-hitl` が指定された場合は、たとえ検証において「分母が0」となる定理が存在する場合でも、`hitl_required` フラグを `false` に設定して JSON レポートを出力し、HITL確認要求によるパイプラインの停止を回避（承認済みとしてバイパス）すること (MUST)。"
+  }
+]

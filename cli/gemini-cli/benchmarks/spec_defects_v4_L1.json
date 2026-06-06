@@ -1,0 +1,101 @@
+[
+  {
+    "target": "/Users/ryota/.gemini/antigravity/scratch/verify_theorems_spec_v4.md",
+    "layer": "L1",
+    "critic_name": "Writing Quality Critic",
+    "severity": "高",
+    "pattern_class": "missing_rfc2119_indicator",
+    "location": "1. 動作要件 (Functional Requirements) 内の11〜12行目",
+    "title": "散逸停止定理および曖昧性収縮定理の定義における RFC 2119 表記の欠落",
+    "issue": "散逸停止定理 (missing_stop_rule) および曖昧性収縮定理 (missing_golden_rule) の検証対象指定において、RFC 2119 の準拠表記 (MUST) が漏れています。13行目の「最小作用ワークフロー定理」には (MUST) が明記されているため、整合性を欠いています。",
+    "proposed_fix": "-     - 散逸停止定理: `missing_stop_rule`\n-     - 曖昧性収縮定理: `missing_golden_rule`\n+     - 散逸停止定理: `missing_stop_rule` であることを検証すること (MUST)。\n+     - 曖昧性収縮定理: `missing_golden_rule` であることを検証すること (MUST)。"
+  },
+  {
+    "target": "/Users/ryota/.gemini/antigravity/scratch/verify_theorems_spec_v4.md",
+    "layer": "L1",
+    "critic_name": "Writing Quality Critic",
+    "severity": "中",
+    "pattern_class": "unnatural_japanese_expression",
+    "location": "2. Task Execution Workflow (実行手順) 内の31行目",
+    "title": "不自然な日本語表現（「0 件 of 正常ファイル」）",
+    "issue": "「0 件 of 正常ファイル」という英語直訳調の不自然な日本語が使われており、文章品質を損ねています。",
+    "proposed_fix": "- defects.jsonl に記録がないファイルは、欠陥検出数 0 件 of 正常ファイルとして明示的にマッピングすること (MUST)。\n+ defects.jsonl に記録がないファイルは、欠陥検出数 0 件の正常ファイルとして明示的にマッピングすること (MUST)。"
+  },
+  {
+    "target": "/Users/ryota/.gemini/antigravity/scratch/verify_theorems_spec_v4.md",
+    "layer": "L1",
+    "critic_name": "Writing Quality Critic",
+    "severity": "中",
+    "pattern_class": "ambiguous_condition_definition",
+    "location": "2. Task Execution Workflow (実行手順) 内の35行目",
+    "title": "デバッグログ出力条件の曖昧さ",
+    "issue": "「DEBUG レベルのログとして出力できる設計とすること (MUST)」とありますが、これを出力するかどうかの条件や切り替えの契機（コマンドライン引数等）が具体的に定義されておらず、設計として曖昧です。",
+    "proposed_fix": "「また、開発・デバッグ時の診断用として、対象ファイルの処理ごと、または異常レコード検出時の詳細な実行ステップを `DEBUG` レベルのログとして出力できる設計とすること (MUST)。」を以下のように差し替えます。\n\n+ また、開発・デバッグ時の診断用として、コマンドライン引数等でデバッグモード（例: `--debug`）が指定された場合に、対象ファイルの処理ごと、または異常レコード検出時の詳細な実行ステップを `DEBUG` レベルのログとして出力すること (MUST)。"
+  },
+  {
+    "target": "/Users/ryota/.gemini/antigravity/scratch/verify_theorems_spec_v4.md",
+    "layer": "L1",
+    "critic_name": "Writing Quality Critic",
+    "severity": "高",
+    "pattern_class": "ambiguous_terminology",
+    "location": "3. 動作安全性 (Safety Rules) 内の39行目",
+    "title": "無効データ許容割合の分母（読み込み総件数）の定義の曖昧さ",
+    "issue": "「読み込み総件数の 5%」の「読み込み総件数」が、defects.jsonl の総レコード件数なのか、あるいは全監査対象ファイル数なのかが文脈上曖昧であり、誤認を招く恐れがあります。",
+    "proposed_fix": "- ただし、無効データの割合が読み込み総件数の 5% を超えた場合は、データの健全性が損なわれていると判断し、\n+ ただし、無効データの割合が defects.jsonl から読み込んだ総レコード件数の 5% を超えた場合は、データの健全性が損なわれていると判断し、"
+  },
+  {
+    "target": "/Users/ryota/.gemini/antigravity/scratch/verify_theorems_spec_v4.md",
+    "layer": "L1",
+    "critic_name": "Writing Quality Critic",
+    "severity": "中",
+    "pattern_class": "ambiguous_error_definition",
+    "location": "3. 動作安全性 (Safety Rules) 内の40行目",
+    "title": "一時的I/Oエラーの定義およびリトライ処理要件の曖昧さ",
+    "issue": "「一時的な I/O エラー」の具体的な範囲やエラー内容（例: 例外クラス）が曖昧です。また、リトライ処理の実行自体に対する RFC 2119 準拠の表記 (MUST) が欠落しています。",
+    "proposed_fix": "- または一時的な I/O エラー（ファイルロック等）に対して最大 3 回の自動リトライ（1秒間隔）を行っても解決しない場合は、\n+ または一時的な I/O エラー（ファイルロック等による BlockingIOError や PermissionError）に対して、最大 3 回の自動リトライ（1秒間隔）を実行すること (MUST)。リトライを行っても解決しない場合は、"
+  },
+  {
+    "target": "/Users/ryota/.gemini/antigravity/scratch/verify_theorems_spec_v4.md",
+    "layer": "L1",
+    "critic_name": "Writing Quality Critic",
+    "severity": "中",
+    "pattern_class": "undefined_default_behavior",
+    "location": "3. 動作安全性 (Safety Rules) 内の41行目",
+    "title": "再帰呼び出しガードにおける環境変数未定義時の挙動の未定義",
+    "issue": "環境変数 `AGENT_EXECUTION_DEPTH` が設定されていない、または数値ではない場合のフォールバック挙動が定義されておらず、スクリプト単体で動作させた場合の挙動が曖昧になります。",
+    "proposed_fix": "- 環境変数で引き渡される実行深度（`AGENT_EXECUTION_DEPTH`）をチェックし、閾値（5回）を超えた場合はエラーを出力して終了コード `3` で即座に実行を停止すること (MUST)。\n+ 環境変数で引き渡される実行深度（`AGENT_EXECUTION_DEPTH`）をチェックし、閾値（5回）を超えた場合はエラーを出力して終了コード `3` で即座に実行を停止すること (MUST)。なお、環境変数が未定義または数値として無効な場合は、実行深度を 1 とみなして処理を継続すること (MUST)。"
+  },
+  {
+    "target": "/Users/ryota/.gemini/antigravity/scratch/verify_theorems_spec_v4.md",
+    "layer": "L1",
+    "critic_name": "Writing Quality Critic",
+    "severity": "高",
+    "pattern_class": "specification_contradiction",
+    "location": "3. 動作安全性 (Safety Rules) 内の42行目（および7, 20, 23, 30行目など）",
+    "title": "パスのハードコード禁止要件とドキュメント記述の自己矛盾",
+    "issue": "「絶対パス（特に個人ユーザー名を含むもの）を直接ハードコードしないこと (MUST)」と指示されていますが、仕様書自体の中に `/Users/ryota/` を含む絶対パスが複数箇所にハードコードされており、自己矛盾しています。",
+    "proposed_fix": "- スクリプト内のパスは、環境変数（例: `APP_DATA_DIR`）や実行時引数、あるいはベースディレクトリからの相対パスとして動的に解決できるように設計し、絶対パス（特に個人ユーザー名を含むもの）を直接ハードコードしないこと (MUST)。\n+ スクリプト内のパスは、環境変数（例: `APP_DATA_DIR`）や実行時引数、あるいはベースディレクトリからの相対パスとして動的に解決できるように設計し、ソースコード内に絶対パス（特に個人ユーザー名を含むもの）を直接ハードコードしないこと (MUST)。仕様書に記載されている絶対パスは実行時のデフォルトフォールバック値（あるいはドキュメント上の記述例）であり、コード中では環境変数や引数等から動的に導出される設計とすること (MUST)。"
+  },
+  {
+    "target": "/Users/ryota/.gemini/antigravity/scratch/verify_theorems_spec_v4.md",
+    "layer": "L1",
+    "critic_name": "Writing Quality Critic",
+    "severity": "中",
+    "pattern_class": "ambiguous_operational_parameters",
+    "location": "3. 動作安全性 (Safety Rules) 内の43行目",
+    "title": "チェックポイントの保存頻度・場所・バイパス条件の曖昧さ",
+    "issue": "チェックポイントを保存する「定期的に」という表現が曖昧であり、また一時ファイル `.verify_theorems_checkpoint` の具体的な保存先ディレクトリも規定されていません。さらに、チェックポイントの動作を無効化する手段も不明確です。",
+    "proposed_fix": "- 処理の進捗状況（最後に読み込んだ defects.jsonl の行番号等）を定期的に一時ファイル（例: `.verify_theorems_checkpoint`）に永続化し、スクリプト再起動時にチェックポイントファイルが存在する場合はその中断行から処理を再開できるようにすること (SHOULD)。\n+ 処理の進捗状況（最後に読み込んだ defects.jsonl の行番号等）を defects.jsonl の100行読み込みごとに、環境変数 `APP_DATA_DIR`（未指定の場合はカレントディレクトリ）配下のファイル `.verify_theorems_checkpoint` に永続化すること (MUST)。また、スクリプト再起動時にチェックポイントファイルが存在する場合はその中断行から処理を再開できるようにすること (SHOULD)。なお、コマンドライン引数 `--force` 等が指定された場合はチェックポイントを無視して最初から処理を実行すること (SHOULD)。"
+  },
+  {
+    "target": "/Users/ryota/.gemini/antigravity/scratch/verify_theorems_spec_v4.md",
+    "layer": "L1",
+    "critic_name": "Writing Quality Critic",
+    "severity": "中",
+    "pattern_class": "inconsistent_notation",
+    "location": "1. 動作要件 (Functional Requirements) 内の8行目",
+    "title": "用語の表記揺れ（ pattern_class ）",
+    "issue": "` pattern_class ` の前後に不要な半角スペースが存在し、ドキュメント内の他の箇所（`pattern_class`）との表記揺れ・不整合が生じています。",
+    "proposed_fix": "- （ファイルIDごとの pattern_class カウントおよび深刻度比率）\n+ （ファイルIDごとの `pattern_class` カウントおよび深刻度比率）"
+  }
+]

@@ -1,0 +1,62 @@
+[
+  {
+    "target": "/Users/ryota/.gemini/antigravity/scratch/verify_theorems_spec_v6.md",
+    "layer": "L8",
+    "critic_name": "Observability Critic",
+    "severity": "中",
+    "pattern_class": "log_consistency_violation",
+    "location": "## 3. 動作安全性 (Safety Rules) - 再帰呼び出しガード (88-89行目)",
+    "title": "再帰呼び出しガード停止時における structlog 不適用の曖昧さ",
+    "criticism": "89行目において「標準エラー出力にエラーを出力し」と記載されており、3.1項の「すべてのログ出力（進捗、デバッグ、エラー）は、structlog を使用して構造化 JSON 形式で出力すること」という大原則に適合しているか曖昧です。また、88行目の不正値検出時（Fail-safe停止）のログ出力規定が欠落しています。再帰ガードによる終了は極めてクリティカルなイベントであり、構造化されていない生のエラー出力が行われると、監視システム（Datadog等）による検知や集約が困難になります。",
+    "improvement": "再帰呼び出しガードによってプロセスを終了（終了コード3）させる全ての場合（カウンタ値の閾値超過および不正値検出時）において、structlog を用いてエラーイベント（例：event=\"recursion_guard_triggered\"）と診断情報を構造化JSONで標準エラー出力（sys.stderr）へ出力することを義務付けます。",
+    "proposed_fix": "  - もしカウンタの値が整数に変換できない不正な形式である場合、または負の数値である場合は、安全側の対策（Fail-safe）として閾値（5回）を超えたものとみなし、`structlog` を用いて標準エラー出力にエラーログを出力した上で、即座に終了コード `3` で実行を停止すること (MUST)。\n  - カウンタの値が閾値（5回）を超えた場合は、`structlog` を用いて標準エラー出力にエラーログを出力し、終了コード `3` で即座に実行を停止すること (MUST)。"
+  },
+  {
+    "target": "/Users/ryota/.gemini/antigravity/scratch/verify_theorems_spec_v6.md",
+    "layer": "L8",
+    "critic_name": "Observability Critic",
+    "severity": "高",
+    "pattern_class": "sensitive_data_exposure",
+    "location": "## 3. 動作安全性 (Safety Rules) - 情報のフィルタリング（マスク処理）(80行目)",
+    "title": "ログマスク処理における環境依存ユーザー名の動的抽出・マスク設計の不足",
+    "criticism": "仕様書では「例: ryyota や ryota を [USER] に置換」のように特定の開発環境のユーザー名をハードコードした例示にとどまっており、実行環境のカレントユーザー名を動的に取得してマスクする設計が規定されていません。このまま実装されると、CI環境や他のオペレーターの実行環境において、異なるユーザー名がマスクされずに絶対パスとしてそのままログ（構造化ログやデバッグログ）に出力され、個人情報および実行環境情報の漏洩を引き起こします。",
+    "improvement": "スクリプト起動時に OS のカレントユーザー名（例：getpass.getuser() や os.getlogin()）を動的に取得し、structlog のカスタムプロセッサ（Processor）としてログ出力時にそれらの文字列を自動的に `[USER]` に置換する動的マスクロジックを実装することを明記します。",
+    "proposed_fix": "- **情報のフィルタリング（マスク処理）**: ログ出力処理において、環境変数や引数から取得したパス、シークレットなどの機密情報（APIトークン、絶対パスに含まれる個人ユーザー名等）がそのままログに出力されないよう、起動時に動的にカレントユーザー名（例: `getpass.getuser()` で取得される文字列）や `APP_DATA_DIR` のパスを検出し、`structlog` のカスタムプロセッサを通じて `[USER]` に置換するマスク処理や、機密キー（`api_key`等）の除外ロジックを実装すること (MUST)。"
+  },
+  {
+    "target": "/Users/ryota/.gemini/antigravity/scratch/verify_theorems_spec_v6.md",
+    "layer": "L8",
+    "critic_name": "Observability Critic",
+    "severity": "高",
+    "pattern_class": "traceability_leakage_or_exposure",
+    "location": "## 3. 動作安全性 (Safety Rules) - Stop Rule (84行目)",
+    "title": "例外ログ出力時のスタックトレース構造化指定と生データマスク処理の不備",
+    "criticism": "84行目にて「structlogでエラーのスタックトレースと診断コンテキスト情報（生データ等）を出力する」と規定されていますが、Pythonの structlog で例外をロギングする際のプロセッサ（format_exc_info等）の有効化や `exc_info=True` の明示的な指定方法が定義されていません。また、パースエラーとなった「生データ」をそのままログ出力すると、その生データ内にAPIキー等の機密情報が含まれていた場合、80行目のマスク処理をバイパスしてそのままログに漏洩するセキュリティリスクがあります。",
+    "improvement": "例外発生時の structlog 呼び出しにおいて、`exc_info=True` を指定すること、および `structlog.processors.format_exc_info` をプロセッサチェーンに含めることを明記します。また、出力する診断コンテキスト（生データ含む）に対しても、ログ送信前に必ずマスク処理が適用されるように設計することを義務付けます。",
+    "proposed_fix": "- **Stop Rule (異常停止条件)**: ファイルの読み込みまたは書き込みにおいて、回復不能な I/O エラーが発生した場合、または一時的な I/O エラー（ファイルロック等）に対して最大 3 回の自動リトライ（1秒間隔）を実行しても解決しない場合は、実行を即座に停止し、`structlog` で例外情報（`exc_info=True` を指定し、適切にフォーマットされたスタックトレース）と、マスク処理済みの診断コンテキスト情報（ファイルパス、行番号、マスク処理済みのパースエラーとなった生データ等）を `ERROR` または `CRITICAL` レベルで出力した上で、終了コード `1` で異常終了すること (MUST)。"
+  },
+  {
+    "target": "/Users/ryota/.gemini/antigravity/scratch/verify_theorems_spec_v6.md",
+    "layer": "L8",
+    "critic_name": "Observability Critic",
+    "severity": "中",
+    "pattern_class": "log_format_inconsistency",
+    "location": "## 2. Task Execution Workflow (実行手順) - 集計と判定 (69行目)",
+    "title": "進捗ログにおけるタイムスタンプ形式とイベントスキーマの未定義",
+    "criticism": "進捗ログにおけるタイムスタンプのフォーマット（ISO 8601等）や、構造化ログのキー名・スキーマが指定されていません。可観測性プラットフォーム（Datadog, AWS CloudWatch Logs等）でログを集約・分析する際、タイムスタンプの形式が統一されていないとパースエラーの原因となり、またイベント名が未定義であると進捗ダッシュボードやアラートの作成が困難になります。",
+    "improvement": "タイムスタンプの出力形式として ISO 8601（UTC または ローカルタイムゾーン付きミリ秒精度）を強制し、`structlog.processors.TimeStamper(fmt=\"iso\")` の使用を指定します。また、進捗ログのイベントキー名および各 phase における `event` フィールドの具体的な命名規則（例：`workflow_phase_changed` など）を規定します。",
+    "proposed_fix": "    - 進捗状況（データ読み込み開始、定理ごとの検証完了、レポート出力完了）において、`structlog` を用いた進捗ログ（JSON形式、イベントおよび ISO 8601 形式 of タイムスタンプ `timestamp`、`phase` キー）を標準出力に出力すること (MUST)。`phase` の値は `\"setup\"`, `\"mapping\"`, `\"statistics\"`, `\"reporting\"` を使用し、`event` フィールドには `\"workflow_phase_changed\"` を設定して、前後のフェーズ変化が追跡できるようにすること (MUST)。"
+  },
+  {
+    "target": "/Users/ryota/.gemini/antigravity/scratch/verify_theorems_spec_v6.md",
+    "layer": "L8",
+    "critic_name": "Observability Critic",
+    "severity": "中",
+    "pattern_class": "observability_metadata_omission",
+    "location": "## 1. 動作安全性 (Safety Rules) - データ出力 (45, 48行目)",
+    "title": "HITL確認要求発生時における structlog への構造化メタデータの埋め込み指定漏れ",
+    "criticism": "45行目で「標準出力でもオペレータに確認を促す警告ログを出力する」と規定されていますが、非対話的（Non-blocking）実行において、この警告ログに構造化されたメタデータ（例：`hitl_required: true` や `warning_type: \"zero_denominator\"`）が含まれていない場合、自動監視システムがログからHITL確認の必要性を検知してアラートを上げることができません。単にテキストとして警告を出すだけでは、バッチ処理における可観測性（Observability）が損なわれます。",
+    "improvement": "HITL確認が必要な場合の警告ログにおいて、`structlog` の出力 JSON に `hitl_required=True` および `warning_reason` などの明示的な構造化属性を含めることを義務付けます。",
+    "proposed_fix": "- **HITL警告**: 検証において「分母が0」となり反例比率を 0% として処理した定理が存在する場合は、レポート内にオペレータの確認が必要な旨の警告フラグ（HITL確認要求）を明記し、`structlog` を用いて `hitl_required=True` のメタデータを含む警告ログ（`WARNING` レベル）を標準出力に出力し、オペレータに確認を促すこと (MUST)。"
+  }
+]

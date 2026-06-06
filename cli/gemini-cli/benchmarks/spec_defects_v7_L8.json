@@ -1,0 +1,50 @@
+[
+  {
+    "target": "/Users/ryota/.gemini/antigravity/scratch/verify_theorems_spec_v7.md",
+    "layer": "L8",
+    "critic_name": "Observability Critic",
+    "severity": "中",
+    "pattern_class": "log_channel_inconsistency",
+    "location": "## 1. 動作要件 (Functional Requirements) - HITL警告 (49行目)、JSONメタデータ出力 (52行目)、および ## 3. 動作安全性 (Safety Rules) - 構造化ログの適用 (99行目)、Golden Rule (108-109行目)、Stop Rule (117行目)",
+    "title": "構造化ログ出力チャネル（stdout/stderr）の混在と一括出力仕様の曖昧さ",
+    "criticism": "【必須】すべてのログは structlog を用いた構造化 JSON 形式で出力する (99行目) と定義されている一方で、警告やエラーログの出力チャネルとして標準出力 (49行目) と標準エラー出力 (108, 109, 117行目) が混在しています。コンテナ環境 (OrbStack) やCI/CD環境においてログ転送エージェントがログを収集する際、標準出力と標準エラー出力に構造化ログが分散していると、重大度 (Severity) の自動判定やフィルタリングルールが複雑化し、監視漏れの原因となります。また、109行目の「全パースエラーのサマリーを標準エラー出力に一括出力」において、構造化 JSON としてどのように出力されるのか（例: 単一のイベントに配列として含めるのか、複数行に分けるのか）が不明確であり、パースエラーの自動収集を困難にします。",
+    "improvement": "【必須】構造化ログ（structlog）の出力チャネルを、原則として標準エラー出力（sys.stderr）に統一します。ただし、将来的なパイプライン統合の要件に合わせて、進捗・デバッグ・エラーすべてを含めて一貫した出力ストリームへルーティングされるように設定します。また、一括出力の際は、structlog を用いた一意のイベント名（例: event='parse_errors_summary'）とエラー情報の配列メタデータを含む構造化 JSON 形式で出力することを明記します。",
+    "proposed_fix": "【必須】\n49行目：structlog を用いて hitl_required=True メタデータを含む警告ログ（WARNING レベル）を標準エラー出力（sys.stderr）に出力し、オペレータに確認を促すこと (MUST)。\n108行目：structlog で標準エラー出力（sys.stderr）に警告ログを出力すること (MUST)。\n109行目：それまでに検出された全パースエラーのサマリー（行番号と理由のリスト）を、structlog を用いてイベント名 event='parse_errors_summary' および errors メタデータ（配列型）を含む構造化ログとして標準エラー出力（sys.stderr）に一括出力した上で、終了コード 2 で異常終了すること。\n117行目：structlog（イベント event='recursion_guard_triggered' と診断メタデータ）を用いて標準エラー出力（sys.stderr）にエラーログを出力した上で、即座に終了コード 3 で実行を停止すること (MUST)。"
+  },
+  {
+    "target": "/Users/ryota/.gemini/antigravity/scratch/verify_theorems_spec_v7.md",
+    "layer": "L8",
+    "critic_name": "Observability Critic",
+    "severity": "高",
+    "pattern_class": "log_masking_definition_conflict",
+    "location": "## 3. 動作安全性 (Safety Rules) - 情報のフィルタリング（マスク処理） (100行目)",
+    "title": "ログマスキング処理における APP_DATA_DIR の置換先トークン設定 of 不整合",
+    "criticism": "【必須】100行目で「APP_DATA_DIR のパスを検出し、structlogのカスタムプロセッサを通じて `[USER]` に置換するマスク処理」と記載されていますが、これは個人ユーザー名（例: カレントユーザー名 `ryota`）の置換先トークン `[USER]` と混同されています。APP_DATA_DIR の絶対パス（例: `/Users/ryota/.gemini/antigravity`）全体を `[USER]` に置換してしまうと、ログ中に現れるパス表現が不自然になり（例: `[USER]/scratch/defects.jsonl` のような不整合な表現、あるいはパス全体の不必要な隠蔽）、開発者やオペレータが診断トレースを読み取る際の認知的負荷を高め、デバッグ効率を低下させます。",
+    "improvement": "【必須】ユーザープライバシー情報（カレントユーザー名）とアプリケーションデータディレクトリのパスについて、置換先トークンを明確に分離します。カレントユーザー名は `[USER]` に、APP_DATA_DIR は `[APP_DATA_DIR]` に置換するルールとして定義を厳密化します。",
+    "proposed_fix": "【必須】\n- **情報のフィルタリング（マスク処理）**: ログ出力処理において、環境変数や引数から取得したパス、シークレットなどの機密情報がそのままログに出力されないよう、起動時に動的にカレントユーザー名（例: `getpass.getuser()` で取得される文字列）や `APP_DATA_DIR` のパスを検出し、`structlog` のカスタムプロセッサを通じて、ユーザー名部分を `[USER]` に、`APP_DATA_DIR` のパス部分を `[APP_DATA_DIR]` にそれぞれ置換するマスク処理や、機密情報（APIトークン、パスワードなど）を `[REDACTED]` にマスクする処理を実装すること (MUST)。"
+  },
+  {
+    "target": "/Users/ryota/.gemini/antigravity/scratch/verify_theorems_spec_v7.md",
+    "layer": "L8",
+    "critic_name": "Observability Critic",
+    "severity": "中",
+    "pattern_class": "insufficient_progress_telemetry",
+    "location": "## 3. 動作安全性 (Safety Rules) - 進捗ログの標準化 (101-105行目)",
+    "title": "進捗フェーズ遷移時における開始・終了ステータス定義の欠落",
+    "criticism": "【必須】進捗フェーズのログ出力において、`event` フィールドに `workflow_phase_changed` を設定し、`phase` キーの値（`setup`, `mapping`, `statistics`, `reporting`）を出力することが義務付けられていますが、各フェーズの「開始 (started)」「完了 (completed)」「失敗 (failed)」といった遷移ステータス (status) の定義が欠落しています。これにより、例えば `reporting` フェーズの実行途中でスクリプトがハングアップした場合、ログからはフェーズに「入った」ことしか分からず、正常に完了したのか、実行中なのかを外部の監視ツールや CI パイプラインが区別できず、可観測性の実効性が著しく損なわれます。",
+    "improvement": "【必須】進捗フェーズログのメタデータとして、フェーズ遷移の状態を示す `status` フィールドを必須化し、各フェーズの開始時と完了時にそれぞれ明確なログレコードを出力するように規定を修正します。",
+    "proposed_fix": "【必須】\n- **進捗ログの標準化**: 進捗ログはタイムスタンプの出力形式として ISO 8601（UTC または ローカルタイムゾーン付きミリ秒精度）を強制し、`structlog.processors.TimeStamper(fmt=\"iso\")` の使用を指定すること (MUST)。また、進捗フェーズのログでは、`event` フィールドに `\"workflow_phase_changed\"` を設定し、`phase` キーの値（以下のフェーズ定義）およびフェーズの遷移状態を示す `status` キーの値（`\"started\"` | `\"completed\"` | `\"failed\"`）を必ず出力すること (MUST)。"
+  },
+  {
+    "target": "/Users/ryota/.gemini/antigravity/scratch/verify_theorems_spec_v7.md",
+    "layer": "L8",
+    "critic_name": "Observability Critic",
+    "severity": "中",
+    "pattern_class": "missing_debug_observability_standard",
+    "location": "## 2. Task Execution Workflow (実行手順) - 2. 実行コマンドと引数指定 (75-76行目) および ## 3. 動作安全性 (Safety Rules)",
+    "title": "デバッグモード時におけるログレベルの動的制御および詳細トレース出力規定の欠如",
+    "criticism": "【必須】仕様書の 75行目において「デバッグ時は `--debug` オプションを付与し、処理の各ステップやパース詳細をログ出力すること (MUST)」と定めていますが、ログ出力の基本ポリシーである ## 3. 動作安全性 (Safety Rules) にて、`--debug` 指定時の最小ログレベル（`DEBUG` レベルの動的有効化）や、どのようなトレース情報（パース行ごとの詳細、メトリクス集計の途中経過など）を `DEBUG` ログとして出力すべきかの規定がありません。この結果、デバッグログの有無や詳細度が開発者の実装に委ねられ、診断に必要な情報が不足する、あるいは逆にログ流量が爆発してパフォーマンスに悪影響を与えるリスクがあります。",
+    "improvement": "【必須】`--debug` オプションが指定された際の `structlog` の最小ログレベル制御（通常は `INFO` だが `--debug` で `DEBUG` に設定）を明記し、デバッグモード時のみに出力すべき診断トレース（パース処理のイテレーション詳細、正規化されたパスの対応関係など）の要件を動作安全性セクションに追加します。",
+    "proposed_fix": "【必須】\n## 3. 動作安全性 (Safety Rules) 内に以下を追加する：\n- **デバッグログの制御**: コマンドライン引数で `--debug` が指定された場合は、`structlog` の最小ログレベルを `DEBUG` に動的に変更すること (MUST)。デバッグモードが有効な場合、各データ行のパース開始・終了、正規化された絶対パスの検証結果、および各定理の集計過程におけるメトリクス更新状況などの診断トレースを `DEBUG` レベルの構造化ログとして出力すること (MUST)。デバッグ引数がない場合は、ログレベルを `INFO` 以上に制限すること (MUST)。"
+  }
+]

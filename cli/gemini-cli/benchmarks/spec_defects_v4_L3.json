@@ -1,0 +1,57 @@
+[
+  {
+    "target": "/Users/ryota/.gemini/antigravity/scratch/verify_theorems_spec_v4.md",
+    "layer": "L3",
+    "critic_name": "Description Optimization Critic",
+    "severity": "高",
+    "pattern_class": "missing_parameter_definition",
+    "location": "23行目および30行目",
+    "title": "JSON出力パスを指定するためのコマンドライン引数定義の欠落",
+    "issue": "23行目で検証結果のJSONファイルを指定されたパスに書き出すことが義務付けられていますが、30行目のコマンドライン引数仕様には `--output` (マークダウン用) と `--defects` のみが定義されており、JSON出力用のパスを外部から指定する引数の定義が不足しています。",
+    "proposed_fix": "30行目の仕様に、JSON出力用パスを指定する `--output-json` (デフォルト: `/Users/ryota/.gemini/antigravity/scratch/theorem_verification_results.json`) 引数の定義を追加してください。"
+  },
+  {
+    "target": "/Users/ryota/.gemini/antigravity/scratch/verify_theorems_spec_v4.md",
+    "layer": "L3",
+    "critic_name": "Description Optimization Critic",
+    "severity": "中",
+    "pattern_class": "ambiguous_logic_definition",
+    "location": "17行目",
+    "title": "最小作用ワークフロー定理における反例検証対象 pattern_class の定義の曖昧さ",
+    "issue": "17行目の反例検証要件において、「各定理に対応する pattern_class が検出されている…ファイル群を分母とし」とありますが、最小作用ワークフロー定理に対応する `missing_execution_workflow` と `missing_workflow` のどちらを対象とするのか（あるいは両方の論理和とするのか）が定義されておらず、実装の不整合を招く恐れがあります。",
+    "proposed_fix": "17行目の分母および分子の判定対象として、「最小作用ワークフロー定理においては、`missing_execution_workflow` または `missing_workflow` のいずれか一方が検出されているファイルを対象とする (MUST)」という旨を明記してください。"
+  },
+  {
+    "target": "/Users/ryota/.gemini/antigravity/scratch/verify_theorems_spec_v4.md",
+    "layer": "L3",
+    "critic_name": "Description Optimization Critic",
+    "severity": "中",
+    "pattern_class": "contradictory_requirements",
+    "location": "7行目、20行目、23行目、30行目、および42行目",
+    "title": "個人名を含む絶対パスの仕様書内ハードコードと禁止ルールの矛盾",
+    "issue": "42行目で「絶対パス（特に個人ユーザー名を含むもの）を直接ハードコードしないこと (MUST)」と規定されているのに対し、仕様書内のデフォルト値定義（7, 20, 23, 30行目）に個人名を含む絶対パス（`/Users/ryota/...`）がそのまま書かれており、要件が自己矛盾しています。",
+    "proposed_fix": "仕様書に定義されているデフォルトパスを、環境変数（例: `$APP_DATA_DIR`）や相対パスを用いた表現（例: `<APP_DATA_DIR>/scratch/...`）に変更し、42行目の動的解決ルールと整合させてください。"
+  },
+  {
+    "target": "/Users/ryota/.gemini/antigravity/scratch/verify_theorems_spec_v4.md",
+    "layer": "L3",
+    "critic_name": "Description Optimization Critic",
+    "severity": "中",
+    "pattern_class": "redundant_responsibility_overlap",
+    "location": "43行目",
+    "title": "小規模データに対する過剰なチェックポイント処理および他モジュールとの責務重複",
+    "issue": "デフォルト88件程度の極めて小規模かつ短時間で終了する処理に対し、チェックポイントによる中断・再開要件（`.verify_theorems_checkpoint`）を課すことは過剰設計です。また、実行状態の管理やリトライ制御は上位のワークフロー（Inngest等）やエージェント実行環境側の責務と重複しており、不要なI/Oや実装の複雑化を引き起こします。",
+    "proposed_fix": "43行目のチェックポイントに関する要件を削除するか、または「チェックポイント処理は行わず、エラーハンドリングおよびリトライは上位のワークフロー側に委ねる」という設計に変更してください。"
+  },
+  {
+    "target": "/Users/ryota/.gemini/antigravity/scratch/verify_theorems_spec_v4.md",
+    "layer": "L3",
+    "critic_name": "Description Optimization Critic",
+    "severity": "中",
+    "pattern_class": "syntax_formatting_defect",
+    "location": "17行目および21行目",
+    "title": "仕様書内でのバッククォートの構文エラーおよびエスケープ文字表記の不完全性",
+    "issue": "17行目では `defects.jsonl` の `layer` フィールドと表記すべき箇所でバッククォートの対が崩れており、21行目ではエスケープ対象のバッククォート（`）をそのまま記述したためにマークダウンのインラインコードブロックが壊れ、それ以降のテキスト描画やパースに悪影響を与えています。",
+    "proposed_fix": "17行目は `defects.jsonl の layer` を `\`defects.jsonl\` の \`layer\`` に修正し、21行目はバッククォート自体のエスケープ（例: <code>`</code> またはダブルバッククォートでの囲み）を行ってマークダウン構文を修正してください。"
+  }
+]

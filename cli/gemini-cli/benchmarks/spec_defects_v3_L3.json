@@ -1,0 +1,46 @@
+[
+  {
+    "target": "/Users/ryota/.gemini/antigravity/scratch/verify_theorems_spec_v3.md",
+    "layer": "L3",
+    "critic_name": "Description Optimization Critic",
+    "severity": "中",
+    "pattern_class": "responsibility_overlap",
+    "location": "## 概要 および ## 1. 動作要件 (Functional Requirements)",
+    "title": "他モジュールとの責務重複を想起させる表現不備（自動審査・検証の対象範囲）",
+    "issue": "概要で「妥当性と厳密性を自動検証する」、要件で「定理の自動審査」と表現されていますが、このスクリプトはコードを自ら走査して欠陥を検出（審査）するのではなく、既に検出された結果である `defects.jsonl` を集計・統計分析して定理の成立条件を判定する「統計集計・判定ツール」です。この記述のままだと、コード監査や静的解析を行う他モジュール（PCC Critic や Linter等）と責務が重複しているように誤解されます。",
+    "proposed_fix": "「概要」を以下のように修正します：\n「AIエージェント工学の3つの定理候補（散逸停止定理、曖昧性収縮定理、最小作用ワークフロー定理）について、すでに監査・検出された欠陥データ（defects.jsonl）および対象ファイルリスト（88件）を用いて、定理の成立条件（再現性、影響度、反例比率）を統計的に集計・検証する Python スクリプトの実装仕様書。」\nまた、「1. 動作要件」の「定理の自動審査」を「定理の統計的検証」に修正します。"
+  },
+  {
+    "target": "/Users/ryota/.gemini/antigravity/scratch/verify_theorems_spec_v3.md",
+    "layer": "L3",
+    "critic_name": "Description Optimization Critic",
+    "severity": "高",
+    "pattern_class": "description_defect",
+    "location": "## 1. 動作要件 (Functional Requirements) - 最小作用ワークフロー定理",
+    "title": "最小作用ワークフロー定理の再現性計算における表現の曖昧さ",
+    "issue": "「論理和（OR）として合算した上で計算する」という表現は、欠陥件数の単純合算（足し算）と誤解される恐れがあります。再現性の判定基準は「ファイル単位での検出率（30%以上のファイル）」であるため、「いずれかの pattern_class が1件以上検出されているファイルの数を、重複なく（論理和で）カウントする」という意味であることを明記する必要があります。",
+    "proposed_fix": "該当部分を以下のように修正します：\n「- 最小作用ワークフロー定理: `missing_execution_workflow` または `missing_workflow` のいずれか一方（あるいは両方）が1件以上検出されているファイルを対象とし、該当するユニークなファイル数の論理和（OR）として分子をカウントし、検出率を計算する。」"
+  },
+  {
+    "target": "/Users/ryota/.gemini/antigravity/scratch/verify_theorems_spec_v3.md",
+    "layer": "L3",
+    "critic_name": "Description Optimization Critic",
+    "severity": "中",
+    "pattern_class": "description_defect",
+    "location": "## 1. 動作要件 (Functional Requirements) - 反例検証 (Counterexample Analysis)",
+    "title": "反例検証における defects.jsonl のスキーマ及びレイヤー定義の表現不足",
+    "issue": "「L2 または L4 レイヤーかつ深刻度...」とありますが、入力データである `defects.jsonl` にどのようなキー名（例: `\"layer\"` や `\"severity\"`）で情報が格納されているか、またその値（例: `\"L2\"`, `\"L4\"`, `\"高\"`, `\"致命的\"`）がどのように表現されているかの記述がありません。他モジュールやデータ生成側とのスキーマキーワードの不整合を招く不備があります。",
+    "proposed_fix": "反例検証の判定基準に、参照する JSON スキーマのフィールド名と値の定義を追記します：\n「...その中で L2 または L4 レイヤー（`defects.jsonl` の `layer` フィールドの値が `\"L2\"` または `\"L4\"`）かつ深刻度（`severity` フィールドの値が `\"高\"` または `\"致命的\"`、あるいは英語の `\"high\"` または `\"critical\"`）である欠陥が1件も検出されていないファイル...」"
+  },
+  {
+    "target": "/Users/ryota/.gemini/antigravity/scratch/verify_theorems_spec_v3.md",
+    "layer": "L3",
+    "critic_name": "Description Optimization Critic",
+    "severity": "中",
+    "pattern_class": "trigger_inconsistency",
+    "location": "## 2. Task Execution Workflow (実行手順) - 1",
+    "title": "外部トリガー（CLI引数等）のパラメータ仕様表現の欠落",
+    "issue": "「外部の設定ファイル（例: target_files.json）から読み込むか、スクリプトの引数として指定可能な設計とし (SHOULD)」とありますが、外部の呼び出し元（他スクリプトやCIワークフローなど）がこのスクリプトを呼び出す際の具体的な引数名（キーワード）や、設定ファイルのパスを指定する環境変数/引数名が定義されていません。呼び出し側トリガーとのインターフェース整合性が欠けています。",
+    "proposed_fix": "具体的な引数オプション名を以下のように仕様書に追記します：\n「1. 監査対象の全88ファイルのパスリストを、外部の設定ファイル（例: target_files.json）から読み込むか、スクリプトの引数（例: `--target-files`）として指定可能な設計とし (SHOULD)、フォールバックとしてスクリプト内部の定数リストとしての定義を許容する (MAY)。」"
+  }
+]

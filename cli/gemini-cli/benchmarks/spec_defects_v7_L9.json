@@ -1,0 +1,38 @@
+[
+  {
+    "target": "/Users/ryota/.gemini/antigravity/scratch/verify_theorems_spec_v7.md",
+    "layer": "L9",
+    "critic_name": "Resilience Critic",
+    "severity": "高",
+    "pattern_class": "faulty_fail_safe_cleanup",
+    "location": "## 3. 動作安全性 (Safety Rules) - 再帰呼び出しガード (113-119行目)",
+    "title": "再帰呼び出しガードの異常判定時におけるクリーンアップ処理の曖昧さとデッドロックのリスク",
+    "criticism": "カウンタ値が不正な形式や負の値、あるいは閾値（5回）を超えた場合に「即座に終了コード 3 で実行を停止する」と規定されているが、この急停止時に排他ロックの解放やカウンタファイル（ロックファイル）の安全なデクリメント・クリーンアップ処理が保証されていない。また、119行目では「デクリメントするか、削除する」という二者択一が実装者に委ねられている。カウンタ値が不正（パース不可など）な場合にデクリメントを試みると、再度のエラーを引き起こすか、不正値が残存したままロックが解放され、次回起動プロセスが即座に異常判定を誤検知するデッドロック状態に陥る危険がある。",
+    "improvement": "不正値検出時（Fail-safe発動時）および閾値超過時は、デクリメント処理を試みるのではなく、カウンタファイルを「確実に削除（クリーンアップ）」した上で終了させることを義務付ける。また、排他ロックの解放およびシグナル受信時を含めた、try...finallyブロック内でのファイル削除シーケンスを仕様として明確化する。",
+    "proposed_fix": "117行目〜119行目を以下のように差し替える：\n- もしカウンタの値が整数に変換できない不正な形式である場合、または負の数値である場合は、安全側の対策（Fail-safe）として閾値（5回）を超えたものとみなし、`structlog`（イベント `event='recursion_guard_triggered'` と診断メタデータ）を用いて標準エラー出力（`sys.stderr`）にエラーログを出力し、排他ロックを解放した上でカウンタファイル（ロックファイル）を確実に削除し、即座に終了コード `3` で実行を停止すること (MUST)。\n- カウンタの値が閾値（5回）を超えた場合は、`structlog`（イベント `event='recursion_guard_triggered'` と診断メタデータ）を用いて標準エラー出力にエラーログを出力し、排他ロックを解放した上でカウンタファイル（ロックファイル）を確実に削除し、終了コード `3` で即座に実行を停止すること (MUST)。\n- 正常終了時および一時的な例外（パースエラー等）による異常終了時においては、`try...finally` ブロックを用いてカウンタ値を安全にデクリメント（値が1の場合はファイルを削除）すること (MUST)。外部シグナル（SIGINT/SIGTERM等）による中断時においても、シグナルハンドラ内で排他ロックの解放およびカウンタファイル（ロックファイル）の削除またはデクリメントを確実に行うこと (MUST)。"
+  },
+  {
+    "target": "/Users/ryota/.gemini/antigravity/scratch/verify_theorems_spec_v7.md",
+    "layer": "L9",
+    "critic_name": "Resilience Critic",
+    "severity": "高",
+    "pattern_class": "graceful_degradation_inconsistency",
+    "location": "## 3. 動作安全性 (Safety Rules) - Golden Rule (107-109行目)",
+    "title": "縮退運転時における検証結果データの不整合と自己反映ループの無限暴走リスク",
+    "criticism": "パースエラーが5%を超えた際、一部の定理を除外して集計を継続する「縮退運転（Graceful Degradation）」が規定されているが、除外された定理の検証結果（合格/不合格）や criticism、improvement の出力仕様が定義されていない。検証結果が未定義のまま「不合格」と評価された場合、後続の自動修復パイプライン（自己反映ループ）が「コードに欠陥がある」と誤判定し、無駄な自動修正処理を繰り返してソースコードを破壊するか無限ループに陥る。また、無効データ多発の状況下で hitl_required が強制的に true に移行されるかどうかも不明瞭である。",
+    "improvement": "「検証不可」となった定理の判定ステータス（例：JSON上では \"UNKNOWN\" または \"UNVERIFIABLE\"、Markdown上では「検証不可」）を明示的に定義する。また、縮退運転が発動した（無効データが5%を超えた）場合は、後続の自動修復による暴走を防ぐため、強制的に hitl_required を true に設定し、オペレータの介入（HITL確認）を義務付けるように仕様を統合する。",
+    "proposed_fix": "109行目の「縮退運転（Graceful Degradation）」の規定の末尾に、以下の記述を追加する：\n- 縮退運転が発動した場合、検証不可となった特定の定理について、JSONメタデータ出力の判定結果（`result`）には `\"UNVERIFIABLE\"` を設定し、`criticism` にはデータ破損の内容を、`improvement` には入力データの修正アクションを定型出力すること (MUST)。この際、後続の自動修復パイプラインが誤作動してソースコードを書き換えるのを防ぐため、強制的に `hitl_required` を `true` に設定し、`event='HITL_PENDING_APPROVAL'` の構造化ログを出力して処理をオペレータの承認待ちにすること (MUST)。"
+  },
+  {
+    "target": "/Users/ryota/.gemini/antigravity/scratch/verify_theorems_spec_v7.md",
+    "layer": "L9",
+    "critic_name": "Resilience Critic",
+    "severity": "中",
+    "pattern_class": "inefficient_retry_policy",
+    "location": "## 3. 動作安全性 (Safety Rules) - Stop Rule (110-112行目)",
+    "title": "回復不能なI/Oエラーに対する不必要なリトライによる検証ループの遅延",
+    "criticism": "回復不能な I/O エラー（PermissionError や FileNotFoundError など）に対しても、一時的エラー（TimeoutError など）と同様に最大5回（指数バックオフにより合計15秒以上）のリトライループを実行するように規定されている。回復不能なエラーはリトライしても解消しないため、この設計は自己反映ループや自動検証パイプラインのターンアラウンドタイムを不必要に引き延ばし、リソースを無駄に占有する。",
+    "improvement": "一時的なエラー（BlockingIOError, TimeoutError, あるいはネットワーク系等）のみをリトライ対象とし、回復不能なエラー（FileNotFoundError, PermissionError, IsADirectoryError 等）が検出された場合は、リトライを行わず即座に異常終了（Fail-Fast）するようにエラーハンドリングの選別基準を定義する。",
+    "proposed_fix": "111行目を以下のように差し替える：\n- ファイルの読み込みまたは書き込みにおいて、一時的な I/O エラー（`BlockingIOError`, `TimeoutError`）が発生した場合は、ジッターを伴う指数バックオフ（初期待ち時間 0.5 秒、乗数 2、最大待ち時間 5 秒、最大リトライ回数 5 回）を適用したリトライループを実装すること (MUST)。ただし、回復不能な I/O エラー（`PermissionError`, `FileNotFoundError`, `IsADirectoryError`）が発生した場合は、リトライを行わず即座に実行を停止し、終了コード `1` で異常終了すること (MUST)。"
+  }
+]

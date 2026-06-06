@@ -1,0 +1,46 @@
+[
+  {
+    "target": "/Users/ryota/.gemini/antigravity/scratch/verify_theorems_spec_v5.md",
+    "layer": "L8",
+    "critic_name": "Observability Critic",
+    "severity": "高",
+    "pattern_class": "conflicting_logging_requirements",
+    "location": "## 3. 動作安全性 (Safety Rules) - 再帰呼び出しガード (54行目)",
+    "title": "再帰呼び出し制限超過時のエラー出力手段と構造化ログ要件の競合",
+    "issue": "54行目にて「インクリメント後の値が閾値（5回）を超えた場合は、標準エラー出力にエラーを出力し、終了コード 3 で即座に実行を停止すること (MUST)」と規定されていますが、51行目で「すべてのログ出力（進捗、デバッグ、エラー）は、structlog を使用して構造化 JSON 形式で出力すること (MUST)」と定められており、54行目の「標準エラー出力にエラーを出力し」という表現が標準の sys.stderr.write などの非構造化ログ出力を許容する曖昧さを持っています。このため、仕様の競合が発生し、ログ解析システムでの例外処理パースエラーを引き起こす懸念があります。",
+    "proposed_fix": "54行目の記述を以下のように修正します。\n\n「インクリメント後の値が閾値（5回）を超えた場合は、`structlog` を使用し、`event=\"recursion_depth_exceeded\"` および深刻度 `CRITICAL` レベルのエラーログ（構造化 JSON 形式）を標準エラー出力へ出力した上で、終了コード `3` で即座に実行を停止すること (MUST)。」"
+  },
+  {
+    "target": "/Users/ryota/.gemini/antigravity/scratch/verify_theorems_spec_v5.md",
+    "layer": "L8",
+    "critic_name": "Observability Critic",
+    "severity": "中",
+    "pattern_class": "incomplete_progress_log_schema",
+    "location": "## 2. Task Execution Workflow (実行手順) - 4. 集計と判定 (44行目)",
+    "title": "進捗構造化ログ（phase）におけるイベント名および追加キーの定義不足",
+    "issue": "44行目で「進捗ログ（JSON形式、イベントおよびタイムスタンプ、`phase` キー）を標準出力に出力すること (MUST)」と規定されていますが、各進捗ポイント（データ読み込み開始、定理ごとの検証完了、レポート出力完了）に対する具体的な `event` フィールドの値（例: `\"load_start\"`, `\"verification_completed\"` など）や、定理検証完了時に「どの定理が検証されたか」を特定するための追加の構造化キー（例: `theorem_name`）が定義されていません。これにより、ログの統一性が失われ、進捗状況の自動監視やダッシュボードでの可視化が困難になります。",
+    "proposed_fix": "44行目の記述を以下のように修正します。\n\n「進捗状況（データ読み込み開始、定理ごとの検証完了、レポート出力完了）において、`structlog` を用いた進捗ログ（JSON形式、イベントおよびタイムスタンプ、`phase` キー）を標準出力に出力すること (MUST)。`phase` の値は `\"setup\"`, `\"mapping\"`, `\"statistics\"`, `\"reporting\"` を使用し、それぞれ対応する `event` キーの値を以下のように統一すること。\n  - データ読み込み開始 (setup): event=\\\"data_loading_started\\\"\n  - マッピング処理 (mapping): event=\\\"file_mapping_completed\\\"（マッピング完了時）\n  - 定理検証完了 (statistics): event=\\\"theorem_verification_completed\\\"（各定理の検証完了時に `theorem_name` キーで定理名を付与）\n  - レポート出力完了 (reporting): event=\\\"report_output_completed\\\"」"
+  },
+  {
+    "target": "/Users/ryota/.gemini/antigravity/scratch/verify_theorems_spec_v5.md",
+    "layer": "L8",
+    "critic_name": "Observability Critic",
+    "severity": "中",
+    "pattern_class": "incomplete_diagnostic_log_schema",
+    "location": "## 3. 動作安全性 (Safety Rules) - 構造化ログ of 適用 / Golden Rule / Stop Rule (51-53行目)",
+    "title": "データスキップおよびI/Oエラー時の診断コンテキストのキー名標準化不足",
+    "issue": "52行目「その行を警告として記録した上でスキップ」および53行目「診断コンテキスト情報（ファイルパス、行番号、パースエラーとなった生データ等）を出力」において、ログ出力される JSON のキー名（例: `file_path` や `line_number` などの命名ルール）が定義されていません。これにより、監視システムや開発者がデバッグのためにログをパースする際、キーの揺れが発生して自動集計や障害分析が阻害されます。",
+    "proposed_fix": "52行目と53行目のログ出力に関する記述に対し、以下の構造化ログのキー標準化ルールを追加します。\n\n「無効データのスキップ時および I/O エラー発生時に `structlog` で出力する診断コンテキスト情報の JSON キーは以下のように統一すること (MUST)。\n  - 対象ファイルパス: `path`\n  - 発生した行番号: `line`\n  - パースエラーとなった元の生データ: `raw_record`（文字列）\n  - 例外エラーメッセージまたはエラー理由: `error`\n  - スタックトレース（I/Oエラー等の場合）: `exception`」"
+  },
+  {
+    "target": "/Users/ryota/.gemini/antigravity/scratch/verify_theorems_spec_v5.md",
+    "layer": "L8",
+    "critic_name": "Observability Critic",
+    "severity": "高",
+    "pattern_class": "incomplete_warning_log_schema",
+    "location": "## 1. 動作要件 (Functional Requirements) - データ出力 (23行目) および ## 3. 動作安全性 (Safety Rules) - 実行環境ガード (56行目)",
+    "title": "HITL確認要求および仮想環境警告ログの構造化スキーマ未定義",
+    "issue": "23行目「標準出力でもオペレータに確認を促す警告ログを出力すること (MUST)」および56行目「`structlog` で警告を出力し、オペレータに `uv` の使用を促すこと」において、ログの重要度レベル（`WARNING` など）や、自動化システムが検知するための構造化パラメータ（例: `hitl_required=True`）が明記されていません。非対話的に実行されるスクリプトにおいて、警告ログが単なるテキストメッセージとして出力されると、後続の自動修復パイプラインや監視ツールがHITL確認要求を正しく検知できず、処理を中断できずに暴走する危険性があります。",
+    "proposed_fix": "23行目および56行目の警告ログに関する仕様を以下のように修正・追記します。\n\n- 23行目: 「検証において「分母が0」となり反例比率を 0% として処理した定理が存在する場合は、レポート内に人間の確認が必要な旨の警告フラグ（HITL確認要求）を明記し、標準出力でも `structlog` を用いて、深刻度 `WARNING` で `event=\"hitl_verification_warning\"` および構造化パラメータ `hitl_required=True` を含む警告ログを出力してオペレータに確認を促すこと (MUST)。」\n- 56行目: 「グローバルな Python 環境で直接実行されたことを検知した場合は、`structlog` を用いて深刻度 `WARNING` で `event=\"global_environment_warning\"` および構造化パラメータ `suggestion=\"use uv\"` を含む警告ログを出力し、オペレータに `uv` の使用を促すこと (SHOULD)。」"
+  }
+]

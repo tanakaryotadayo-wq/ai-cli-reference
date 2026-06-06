@@ -1,0 +1,35 @@
+[
+  {
+    "target": "/Users/ryota/.gemini/antigravity/scratch/verify_theorems_spec_v3.md",
+    "layer": "L7",
+    "critic_name": "Tool API Critic",
+    "severity": "中",
+    "pattern_class": "missing_argument_validation",
+    "location": "## 2. Task Execution Workflow (実行手順) 1. (17-18行目)",
+    "title": "スクリプト引数および外部定義ファイルの入力バリジェーション要件の不足",
+    "issue": "スクリプト引数として監査対象ファイルのパスリストを指定可能にする（SHOULD）、または外部設定ファイルから読み込むとしているが、パスが存在しない場合や無効なパスが指定された場合のバリデーションルール（型、フォーマット、存在チェック）や、バリデーションエラー時のエラー処理および終了コードの設定が定義されていない。",
+    "proposed_fix": "1. 監査対象の全88ファイルのパスリストを、外部の設定ファイル（例: target_files.json）から読み込むか、スクリプトの引数（例: `--targets`）として指定可能な設計とする (SHOULD)。引数や設定ファイルから渡されたパスに対しては、スクリプト起動時に必ず存在チェックおよび読み込み権限チェックを行い、無効なパスが検出された場合は独自のフォールバックを行わずに、エラー詳細を標準エラー出力に吐き出した上で終了コード 1 で異常終了すること (MUST)。"
+  },
+  {
+    "target": "/Users/ryota/.gemini/antigravity/scratch/verify_theorems_spec_v3.md",
+    "layer": "L7",
+    "critic_name": "Tool API Critic",
+    "severity": "中",
+    "pattern_class": "missing_io_exception_fallback",
+    "location": "## 3. 動作安全性 (Safety Rules) - Stop Rule (異常停止条件) (27行目)",
+    "title": "I/O例外発生時の一時的エラーに対するリトライ・フォールバック設計の不足",
+    "issue": "ファイルの読み込みまたは書き込みにおける「1回でも I/O エラーが発生した場合」の即時停止要件は、ネットワーク共有ドライブや一時的なファイルロックなどの一時的・回復可能なI/O例外（PermissionErrorやBlockingIOError等）に対しても即時異常終了させてしまうため、システムの可用性を損なう。一時的なエラーに対するリトライ回数や待機時間の制御、および最終的なフォールバック（別パスへの書き込みやメモリ上での保持など）の要件を定義すべきである。",
+    "proposed_fix": "- **Stop Rule (異常停止条件)**: ファイルの読み込みまたは書き込みにおいて、回復不能な I/O エラー（ディスクフル、致命的なパーミッションエラー等）が発生した場合、または一時的な I/O エラー（ファイルロック等）に対して最大 3 回の自動リトライ（1秒間隔）を行っても解決しない場合は、スクリプトの実行を即座に停止し、エラーログとスタックトレースを出力して異常終了（終了コード 2）すること (MUST)。"
+  },
+  {
+    "target": "/Users/ryota/.gemini/antigravity/scratch/verify_theorems_spec_v3.md",
+    "layer": "L7",
+    "critic_name": "Tool API Critic",
+    "severity": "高",
+    "pattern_class": "missing_hitl_integration",
+    "location": "## 1. 動作要件 (Functional Requirements) - データ出力 (15行目)",
+    "title": "レポート上書き時および検証結果の閾値逸脱時における Human-in-the-loop 要件の不足",
+    "issue": "検証結果レポート `/Users/ryota/.gemini/antigravity/scratch/theorem_verification_results.md` を出力する際、既存ファイルの上書き保存に対する確認や世代管理（バックアップ作成）の要件がなく、誤って過去の重要データを破壊するリスクがある。また、反例比率が閾値を大幅に超えるなど異常値が検出された場合や、分母が0で処理された場合に、自動判定で合格とするのではなく、人間に確認を促す（Human-in-the-loop）プロトコルが定義されていない。",
+    "proposed_fix": "- **データ出力**: 検証結果のメトリクスと合格/不合格判定をまとめたレポートを `/Users/ryota/.gemini/antigravity/scratch/theorem_verification_results.md` に書き出すこと (MUST)。ただし、既にファイルが存在する場合は、自動でバックアップ（例: theorem_verification_results.md.bak）を作成した上で上書きすること (MUST)。また、検証において「分母が0」となり反例比率を 0% として処理した定理が存在する場合は、レポート内に人間の確認が必要な旨の警告フラグ（HITL確認要求）を明記し、標準出力でもオペレータに確認を促す警告ログを出力すること (MUST)。"
+  }
+]

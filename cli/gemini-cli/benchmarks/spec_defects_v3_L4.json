@@ -1,0 +1,57 @@
+[
+  {
+    "target": "/Users/ryota/.gemini/antigravity/scratch/verify_theorems_spec_v3.md",
+    "layer": "L4",
+    "critic_name": "Ecosystem Security Critic",
+    "severity": "高",
+    "pattern_class": "injection_risk",
+    "location": "## 1. 動作要件 (Functional Requirements)",
+    "title": "入力データの Markdown インジェクション脆弱性",
+    "issue": "defects.jsonl から読み込んだ欠陥データをパースし、theorem_verification_results.md にマークダウンレポートとして出力する際、欠陥データ内の任意の文字列（title, issue, proposed_fix 等）が適切にエスケープされずにマークダウンに埋め込まれると、Markdown インジェクションや HTML インジェクションが発生するリスクがあります。",
+    "proposed_fix": "- **エスケープ処理とサニタイズ**: defects.jsonl から取得したテキストデータをマークダウンレポートに埋め込む際は、マークダウンの特殊文字（#, *, [, ], ` 等）や HTML タグを適切にエスケープ（サニタイズ）し、インジェクションが発生しないように処理すること (MUST)。"
+  },
+  {
+    "target": "/Users/ryota/.gemini/antigravity/scratch/verify_theorems_spec_v3.md",
+    "layer": "L4",
+    "critic_name": "Ecosystem Security Critic",
+    "severity": "中",
+    "pattern_class": "secret_leakage_and_hardcoded_paths",
+    "location": "## 1. 動作要件 (Functional Requirements) および ## 3. 動作安全性 (Safety Rules)",
+    "title": "個人環境に依存する絶対パスのハードコーディング",
+    "issue": "仕様書内で /Users/ryota/... などの個人環境名（ryota）を含む絶対パスが直接指定されています。これは機密情報の漏洩につながる懸念があり、かつ環境依存度を高めてスクリプトのポータビリティを低下させます。",
+    "proposed_fix": "- **パスの動的解決**: スクリプト内のパスは、環境変数（例: APP_DATA_DIR）や実行時引数、あるいはベースディレクトリからの相対パスとして動的に解決できるように設計し、絶対パス（特に個人ユーザー名を含むもの）を直接ハードコードしないこと (MUST)。"
+  },
+  {
+    "target": "/Users/ryota/.gemini/antigravity/scratch/verify_theorems_spec_v3.md",
+    "layer": "L4",
+    "critic_name": "Ecosystem Security Critic",
+    "severity": "高",
+    "pattern_class": "missing_destruct_safeguard",
+    "location": "## 1. 動作要件 (Functional Requirements) のデータ出力",
+    "title": "既存レポートファイル上書きに対する安全対策の欠如",
+    "issue": "theorem_verification_results.md への書き出し要件において、同名ファイルが既に存在する場合の上書き・退避・バックアップポリシーが定義されていません。誤って過去の重要な検証結果を消失させるリスクがあります。",
+    "proposed_fix": "- **バックアップと世代管理**: レポートファイルを書き出す際、既に同名のファイルが存在する場合は、既存ファイルを上書きする前にバックアップ（タイムスタンプ付きの別名保存など）を作成するか、世代管理を行うこと (MUST)。"
+  },
+  {
+    "target": "/Users/ryota/.gemini/antigravity/scratch/verify_theorems_spec_v3.md",
+    "layer": "L4",
+    "critic_name": "Ecosystem Security Critic",
+    "severity": "高",
+    "pattern_class": "recursion_loop_vulnerability",
+    "location": "## 3. 動作安全性 (Safety Rules)",
+    "title": "エージェント実行時の再帰・無限ループガードの欠如",
+    "issue": "AIエージェントの自律的な処理フローの中でこのスクリプトが呼び出される場合、エラーや判定のフィードバックによってエージェント自身が無限にスクリプトを実行し続ける「再帰実行ループ」に陥るリスクがあります。スクリプト側で最大実行深度などを検知するガード機構がありません。",
+    "proposed_fix": "- **再帰呼び出しガード**: エージェント実行環境下において、スクリプトが再帰的に呼び出されるのを防止するため、環境変数や引数等で引き渡される実行深度（AGENT_EXECUTION_DEPTH 等）をチェックし、閾値（例: 5回）を超えた場合はエラーを出力して即座に実行を停止する再帰ガードを実装すること (MUST)。"
+  },
+  {
+    "target": "/Users/ryota/.gemini/antigravity/scratch/verify_theorems_spec_v3.md",
+    "layer": "L4",
+    "critic_name": "Ecosystem Security Critic",
+    "severity": "中",
+    "pattern_class": "ecosystem_incompatibility",
+    "location": "新規セクション（## 4. 開発環境・ツールチェーン要件）",
+    "title": "パッケージ管理ツール（uv）および Linter/Formatter（Ruff）の指定欠如",
+    "issue": "2026年推奨環境である uv を用いた依存関係管理や、Ruff による静的解析・フォーマット適用の要件が記述されておらず、非推奨の pip 使用や古いフォーマッター混入を防止できません。",
+    "proposed_fix": "## 4. 開発環境・ツールチェーン要件\n- **パッケージ管理**: 依存ライブラリのインストールおよび仮想環境の管理には、必ず uv を使用すること (MUST)。pip の直接使用は禁止とする。\n- **コード品質チェック**: コードのフォーマットおよび静的解析には Ruff を使用し、エラーがない状態でコミットすること (MUST)。"
+  }
+]

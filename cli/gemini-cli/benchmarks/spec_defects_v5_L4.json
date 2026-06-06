@@ -1,0 +1,57 @@
+[
+  {
+    "target": "/Users/ryota/.gemini/antigravity/scratch/verify_theorems_spec_v5.md",
+    "layer": "L4",
+    "critic_name": "Ecosystem Security Critic",
+    "severity": "高",
+    "pattern_class": "path_traversal",
+    "location": "## 2. Task Execution Workflow (L33-38) および ## 3. 動作安全性 (L55)",
+    "title": "Path Traversal（パス横断）に対する入力検証およびアクセス制限の欠如",
+    "issue": "コマンドライン引数（--targets, --defects, --output 等）や環境変数で指定されるファイルパスについて、絶対パス正規化やシンボリックリンク解決の規定はあるものの、許可されたディレクトリ範囲（例: $APP_DATA_DIR またはプロジェクトルート配下）へのアクセス制限が明記されていません。これにより、悪意ある、あるいは誤った指定によって /etc/passwd やシステム上の重要ファイルを読み書き・上書きされる Path Traversal 脆弱性のリスクがあります。",
+    "proposed_fix": "「3. 動作安全性」の「パスの動的解決」セクションに以下の記述を追加する：\n- **パスのバリデーション**: 引数や環境変数で解決された絶対パスが、想定された許可ディレクトリ（例: `$APP_DATA_DIR` の配下、またはカレントディレクトリ配下）の範囲内にあることを検証すること (MUST)。許可されたディレクトリ外への読み書き要求を検知した場合は、セキュリティ違反として `structlog` にエラーを記録し、終了コード `1` で即座に異常終了すること (MUST)。"
+  },
+  {
+    "target": "/Users/ryota/.gemini/antigravity/scratch/verify_theorems_spec_v5.md",
+    "layer": "L4",
+    "critic_name": "Ecosystem Security Critic",
+    "severity": "高",
+    "pattern_class": "recursion_guard_bypass",
+    "location": "## 3. 動作安全性 (L54)",
+    "title": "再帰呼び出しガード（AGENT_EXECUTION_DEPTH）における型エラーおよびバイパスの脆弱性",
+    "issue": "環境変数 `AGENT_EXECUTION_DEPTH` をチェック・インクリメントする際、環境変数が整数に変換できない不正な値（文字列など）や負の数の場合に対するエラーハンドリングや、子プロセス起動時の環境変数伝播の強制についての定義がありません。これにより、ガードが例外クラッシュするか、あるいはバイパスされて無限再帰ループが発生するリスクがあります。",
+    "proposed_fix": "「再帰呼び出しガード」の記述を以下のように修正・補強する：\n- **再帰呼び出しガード**: エージェント実行環境下におけるスクリプトの無限再帰呼び出しを防止するため、スクリプトの起動直後（他のいかなる初期化、引数パース、ファイルI/Oよりも前）に、環境変数 `AGENT_EXECUTION_DEPTH` をチェックすること (MUST)。環境変数が未定義の場合は `1` としてみなし、定義されている場合は現在の値をインクリメントして環境変数に再設定すること (MUST)。もし環境変数の値が整数に変換できない不正な形式である場合、または負の数値である場合は、安全側の対策（Fail-safe）として閾値（5回）を超えたものとみなし、即座に終了コード `3` で実行を停止すること (MUST)。また、スクリプトが何らかのサブプロセスを呼び出す際は、この環境変数を必ず子プロセスに継承（エクスポート）して実行すること (MUST)。"
+  },
+  {
+    "target": "/Users/ryota/.gemini/antigravity/scratch/verify_theorems_spec_v5.md",
+    "layer": "L4",
+    "critic_name": "Ecosystem Security Critic",
+    "severity": "中",
+    "pattern_class": "insecure_file_permission",
+    "location": "## 1. 動作要件 (L21)",
+    "title": "生成・一時ファイルのパーミッション制限定義の欠如",
+    "issue": "出力先ディレクトリの作成時パーミッションとして `0755` が例示されていますが、生成される検証結果レポート（MD、JSON）やアトミック置換前の一時ファイルについて、具体的なファイルパーミッション要件が指定されていません。システムのデフォルト umask 設定によっては、マルチユーザー環境において他ユーザーから検証データが閲覧・改ざんされるセキュリティ上のリスクがあります。",
+    "proposed_fix": "「データ出力」セクションのファイル出力要件に以下を追加する：\n- **ファイルパーミッションの制限**: レポートファイルおよび一時ファイルを作成する際は、必要最小限のアクセス権限（例: 所有者のみ読み書き可能な `0600`、または読み取り専用とする場合は `0644`）を明示的に指定して作成すること (MUST)。"
+  },
+  {
+    "target": "/Users/ryota/.gemini/antigravity/scratch/verify_theorems_spec_v5.md",
+    "layer": "L4",
+    "critic_name": "Ecosystem Security Critic",
+    "severity": "中",
+    "pattern_class": "denial_of_service",
+    "location": "## 1. 動作要件 (L7-8) および ## 3. 動作安全性 (L52-53)",
+    "title": "巨大な入力ファイル・行に対するDoS（サービス拒否）対策の欠如",
+    "issue": "集計用の最小限のメトリクスのみを保持するメモリフットプリント制限（L8）は定義されていますが、`defects.jsonl` の読み込み処理において、1行あたりの最大サイズ制限やファイル全体のサイズ上限が規定されていません。悪意のある巨大な行や極端に肥大化したファイルをパースしようとした場合、バッファオーバーフローやメモリの枯渇（OOM）を引き起こし、システムがハングアップする脆弱性があります。",
+    "proposed_fix": "「データ入力」または「Golden Rule」セクションに以下の要件を追加する：\n- **入力サイズ制限（DoS対策）**: `defects.jsonl` を1行ずつ読み込む際、1行あたりの最大許容サイズ（例: 10MB）を設け、これを超える巨大な行を検出した場合は、セキュリティ保護のため処理を中断し、終了コード `1` で異常終了すること (MUST)。"
+  },
+  {
+    "target": "/Users/ryota/.gemini/antigravity/scratch/verify_theorems_spec_v5.md",
+    "layer": "L4",
+    "critic_name": "Ecosystem Security Critic",
+    "severity": "中",
+    "pattern_class": "information_exposure",
+    "location": "## 2. Task Execution Workflow (L44-45) および ## 3. 動作安全性 (L51)",
+    "title": "ログ出力時におけるシークレットおよび重要情報の漏洩対策の欠如",
+    "issue": "structlog による構造化 JSON ログ of 出力（L44-45, 51）やデバッグログ出力（L45）が指定されていますが、ログメッセージやメタデータに機密情報（APIトークン、シークレット、絶対パスに含まれる個人ユーザー名など）が誤って出力・蓄積されることに対するフィルタリング（マスク）ポリシーが定義されていません。",
+    "proposed_fix": "「構造化ログの適用」セクションに以下の要件を追加する：\n- **情報のフィルタリング（マスク処理）**: ログ出力処理において、環境変数や引数から取得したパス、シークレットなどの機密情報がログ（特に標準出力や構造化キー）にそのまま出力されないよう、シークレットのマスク処理や機密キーの除外ロジックを実装すること (MUST)。"
+  }
+]

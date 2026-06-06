@@ -1,0 +1,38 @@
+[
+  {
+    "target": "/Users/ryota/.gemini/antigravity/scratch/verify_theorems_spec_v8.md",
+    "layer": "L8",
+    "critic_name": "Observability Critic",
+    "severity": "高",
+    "pattern_class": "missing_phase_failed_status",
+    "location": "## 3. 動作安全性 (Safety Rules) - 進捗ログの標準化 (124-128行目)",
+    "title": "異常終了時における進捗フェーズの status=\"failed\" ログ記録の欠落",
+    "criticism": "【必須】仕様書では、進捗フェーズのログに `phase` および `status`（`\"started\"` | `\"completed\"` | `\"failed\"`）を出力することを義務付けているが、異常終了（終了コード1, 2, 3）時に、現在実行中のフェーズが `status=\"failed\"` として出力される保証がない。これにより、システム監視ツールやCI/CDがどのフェーズで障害が発生したかを自動判別できず、可観測性が低下する。",
+    "improvement": "【必須】異常終了をもたらす例外ハンドラ（`except` ブロック）や早期リターン箇所において、アクティブな進捗フェーズに対して `status=\"failed\"` およびエラー詳細情報（`error_message`, `error_type`）を含む `WORKFLOW_PHASE_CHANGED` イベントの `structlog` 出力を明示的に行うよう仕様を修正する。",
+    "proposed_fix": "【必須】124行目を以下のように修正する：\n- **進捗ログの標準化**: 進捗ログはタイムスタンプの出力形式として ISO 8601（UTC または ローカルタイムゾーン付きミリ秒精度）を強制し、`structlog.processors.TimeStamper(fmt=\"iso\")` の使用を指定すること (MUST)。また、進捗フェーズのログでは、`event` フィールドに `\\\"WORKFLOW_PHASE_CHANGED\\\"` を設定し、`phase` キーの値（以下のフェーズ定義）およびフェーズの遷移状態を示す `status` キーの値（`\\\"started\\\"` | `\\\"completed\\\"` | `\\\"failed\\\"`）を必ず出力すること (MUST)。\n  - 特に、例外発生やバリデーション違反等でスクリプトが異常終了（終了コード1, 2, 3）する場合は、終了直前に現在のアクティブなフェーズに対して `status=\\\"failed\\\"` とエラー内容（`error_class`, `error_message`）を付与した `WORKFLOW_PHASE_CHANGED` ログを出力すること (MUST)。"
+  },
+  {
+    "target": "/Users/ryota/.gemini/antigravity/scratch/verify_theorems_spec_v8.md",
+    "layer": "L8",
+    "critic_name": "Observability Critic",
+    "severity": "高",
+    "pattern_class": "insufficient_log_masking",
+    "location": "## 3. 動作安全性 (Safety Rules) - Golden Rule (130-131行目)",
+    "title": "パースエラー警告ログにおける生データ抜粋に対する機密情報漏洩リスク",
+    "criticism": "【必須】130行目で「生データの抜粋（マスク処理後）」を含めることを義務付けているが、122行目の「情報のフィルタリング」ではカレントユーザー名と `APP_DATA_DIR` の置換しか規定されていない。もし `defects.jsonl` の中にAPIキー、トークン、パスワード、あるいは個人情報（PII）などの機密情報が含まれていた場合、それらがそのままログに出力され、セキュリティ上の脆弱性（情報漏洩）を招く。",
+    "improvement": "【必須】ログに出力する「生データの抜粋」に含まれうる一般的な機密情報パターン（16進数のハッシュ、APIキー形式、特定パターンのトークン等）を正規表現等でマスクするか、抜粋の最大文字数を制限（例：最初の50文字のみなど）した上で、完全に非構造化された文字列をそのまま出力せず、安全にサニタイズする専用プロセッサの適用を義務付ける。",
+    "proposed_fix": "【必須】130行目を以下のように修正する：\n- データパース時において、JSONデコードエラー、あるいは必須キー（`target`, `pattern_class`, `severity`, `layer`）が欠落している行を「無効データ」と判定し、その行を警告ログ（レベル: `WARNING`）として記録した上でスキップし、残りのデータのパース処理を継続すること (MUST)。警告ログにはエラーが発生した「ファイルパス」「行番号」「生データの抜粋（マスク処理後）」「パース失敗理由（例外メッセージ）」を必ず含めること (MUST)。\n  - 生データの抜粋（マスク処理後）においては、シークレット（APIキー、トークン、パスワード等）に合致する文字列を `[REDACTED]` にマスクするほか、ログの肥大化と機密情報の偶発的漏洩を防ぐため、抜粋する文字数は該当行の先頭から最大100文字に制限すること (MUST)。"
+  },
+  {
+    "target": "/Users/ryota/.gemini/antigravity/scratch/verify_theorems_spec_v8.md",
+    "layer": "L8",
+    "critic_name": "Observability Critic",
+    "severity": "中",
+    "pattern_class": "missing_progress_metrics",
+    "location": "## 3. 動作安全性 (Safety Rules) - 進捗ログの標準化 (124-128行目)",
+    "title": "大量データ処理時における進捗フィードバック（進捗率）の定義欠落によるUX低下",
+    "criticism": "【必須】ターゲットファイル数（デフォルト88件）や `defects.jsonl` の行数が膨大になった場合、マッピングや統計集計処理に時間を要する。進捗フェーズの開始（`started`）と完了（`completed`）のログだけでは、処理が長時間にわたる場合に進捗が途中で滞っているのか、あるいは正常に進行しているのかが判別できず、進捗フィードバック（UX）として著しく不親切である。",
+    "improvement": "【必須】大量データを処理する `mapping` フェーズにおいて、一定割合（例：全体の10%ごと、または1000件ごとなど）で処理済みの件数や進捗率（%）を示す構造化進捗ログを出力する仕様を設ける。",
+    "proposed_fix": "【必須】126行目の `\"mapping\"` の記述の後に以下を追加する：\n- `\"mapping\"`: ターゲットファイルリストおよび欠陥データの読み込み、絶対パスへの正規化、およびファイルごとの欠陥マッピング処理。\n  - データの読み込みおよびマッピング処理中は、進捗フィードバックとして、処理されたレコード数またはターゲットファイル数が全体の 10% 増加するごとに、`event='PROCESSING_PROGRESS'`、`processed_count`、`total_count`、および `progress_percentage` を含む構造化ログを出力すること (MUST)。"
+  }
+]

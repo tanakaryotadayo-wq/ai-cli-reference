@@ -1,0 +1,57 @@
+[
+  {
+    "target": "/Users/ryota/.gemini/antigravity/scratch/verify_theorems_spec_v5.md",
+    "layer": "L3",
+    "critic_name": "Description Optimization Critic",
+    "severity": "中",
+    "pattern_class": "typo_and_ambiguity",
+    "location": "## 2. Task Execution Workflow (実行手順) -> オペレーター/エージェント作業ワークフロー -> 1. 事前準備 (31行目)",
+    "title": "「所定 of ディレクトリ」という不自然な表現および配置先の曖昧さ",
+    "issue": "「所定 of ディレクトリ」という文言は typo（または日本語と英語の混在）であり、配置すべき具体的なディレクトリパスや基準が不明確であるため、実装者やオペレーターが混乱する原因となります。",
+    "proposed_fix": "「監査対象のパスリストが記述された JSON ファイル（例: `target_files.json`）を作成し、所定のディレクトリ（例: スクリプトと同一のカレントディレクトリ、または環境変数等で指定されたディレクトリ）に配置する。」"
+  },
+  {
+    "target": "/Users/ryota/.gemini/antigravity/scratch/verify_theorems_spec_v5.md",
+    "layer": "L3",
+    "critic_name": "Description Optimization Critic",
+    "severity": "高",
+    "pattern_class": "boundary_and_trigger_ambiguity",
+    "location": "## 1. 動作要件 (Functional Requirements) -> データ出力 (24-25行目)",
+    "title": "後続の自動修復パイプラインとの連携トリガーや責務境界の未定義",
+    "issue": "「後続のAIエージェントや検証パイプラインが自己反映および自動修復のアクションを実行できるよう...」と記述されていますが、本スクリプト自身がトリガーとなるイベントやシグナル（例: Inngestワークフローイベントや終了時の特定の出力）を発行するのか、単にJSONファイルを出力するだけなのかの責務境界が曖昧です。また、外部から呼び出される際のトリガーとなるキーワードとの整合性が定義されていません。",
+    "proposed_fix": "「同時に、後続のAIエージェントや検証パイプライン（例: Inngest ワークフロー等のオーケストレーター）が自己反映（Self-Reflection）および自動修復のアクションを実行できるよう、検証結果の詳細（各定理の判定、メトリクス数値、反例ファイルリスト、および `hitl_required` フラグ）を含む構造化された JSON ファイルを、指定されたパス（デフォルト: `$APP_DATA_DIR/scratch/theorem_verification_results.json`）に書き出すこと (MUST)。本スクリプトの責務はファイル書き出しまでとし、後続パイプラインの起動（トリガー）はワークフローエンジン側で行うものとする。」"
+  },
+  {
+    "target": "/Users/ryota/.gemini/antigravity/scratch/verify_theorems_spec_v5.md",
+    "layer": "L3",
+    "critic_name": "Description Optimization Critic",
+    "severity": "高",
+    "pattern_class": "processing_sequence_ambiguity",
+    "location": "## 1. 動作要件 (Functional Requirements) -> データ出力 (20-21行目)",
+    "title": "バックアップ作成とアトミックリネーム処理の順序の不整合",
+    "issue": "「自動でバックアップを作成した上で上書きすること」という記述と、「一時ファイルとして書き出し、書き込み成功後にアトミックにリネーム（置換）する」という記述の順序や実行フローが具体的に記述されていません。アトミックリネームによって既存ファイルが置換される前に、どのタイミングでどのようにバックアップを作成するのか（既存ファイルを先に別名に退避するのかなど）が不明確であり、実装時の一時ファイル競合や破損の原因になります。",
+    "proposed_fix": "「検証結果のメトリクスと合格/不合格判定をまとめたレポートを、指定された出力パス（デフォルト: `$APP_DATA_DIR/scratch/theorem_verification_results.md`）に書き出すこと (MUST)。既存の出力ファイルが存在する場合は、アトミックなリネーム処理の前に既存ファイルをバックアップ（例: `theorem_verification_results.md.bak` などの別名保存）としてリネームまたはコピーして退避させ、その後に一時ファイルから本ファイルへリネーム（置換）する安全な書き込みフローを採用すること (MUST)。」"
+  },
+  {
+    "target": "/Users/ryota/.gemini/antigravity/scratch/verify_theorems_spec_v5.md",
+    "layer": "L3",
+    "critic_name": "Description Optimization Critic",
+    "severity": "中",
+    "pattern_class": "terminology_inconsistency",
+    "location": "## 1. 動作要件 (Functional Requirements) -> データ出力 (26行目) および ## 3. 動作安全性 (Safety Rules) (52行目)",
+    "title": "「Golden Rule」という用語の異なる文脈での二重使用による混乱",
+    "issue": "26行目では『警告は出力およびファイル記録のみにとどめる (Golden Rule)』として『非対話的実行ルール』に Golden Rule の呼称を付与していますが、52行目では『Golden Rule (デフォルト動作)』として『予期しない形式のデータをスキップして処理を継続するルール』を定義しています。同じ呼称が異なる挙動に対して使われているため、仕様書の用語定義がブレており実装時の混乱を招きます。",
+    "proposed_fix": "26行目の記述を以下のように修正します：\n「警告は出力およびファイル記録のみにとどめる (非対話的実行原則)。」"
+  },
+  {
+    "target": "/Users/ryota/.gemini/antigravity/scratch/verify_theorems_spec_v5.md",
+    "layer": "L3",
+    "critic_name": "Description Optimization Critic",
+    "severity": "中",
+    "pattern_class": "detection_logic_ambiguity",
+    "location": "## 3. 動作安全性 (Safety Rules) -> 実行環境ガード (56行目)",
+    "title": "仮想環境検知の判定基準の具体性不足",
+    "issue": "「`uv run` またはアクティベートされた仮想環境（`.venv`）内で行われていることをチェックすること」とありますが、この判定基準が具体的に示されていません。判定方法が曖昧な場合、OSや実行環境の差異によって誤判定（グローバル環境と誤認して警告を出す、またはその逆）が発生しやすくなります。",
+    "proposed_fix": "「スクリプトの実行は、`uv run` またはアクティベートされた仮想環境（`.venv`）内で行われていること（例：環境変数 `VIRTUAL_ENV` が設定されていること、または `sys.prefix != sys.base_prefix` であること）をチェックすること (SHOULD)。」"
+  }
+]

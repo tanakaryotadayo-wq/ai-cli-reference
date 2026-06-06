@@ -1,0 +1,50 @@
+[
+  {
+    "target": "/Users/ryota/.gemini/antigravity/scratch/verify_theorems_spec_v8.md",
+    "layer": "L3",
+    "critic_name": "Description Optimization Critic",
+    "severity": "高",
+    "pattern_class": "description_inconsistency",
+    "location": "1. 動作要件 (Functional Requirements) - データ入力、および 2. Task Execution Workflow",
+    "title": "対象ファイルリスト入力用引数 --targets の仕様記述漏れ",
+    "criticism": "12行目からの「データ入力」要件において、スクリプトが「対象ファイルリストを用いて」検証を行うと記述されているにもかかわらず、その対象ファイルリストをどのコマンドライン引数で受け取るのか（またはデフォルト値が何なのか）の仕様記述が完全に欠落している。その後、71行目以降の「Task Execution Workflow」の実行例で突如 `--targets target_files.json` という引数が使用されており、動作要件と手順の記述間でインタフェース（外部トリガー）の整合性が取れていない。これにより、実装者が対象ファイルリストの引数名を独自に推測して実装し、ワークフローで指定されたコマンドが動かないなどの動作破綻を引き起こす。",
+    "improvement": "「データ入力」要件の中に、対象ファイルリストを指定するためのコマンドライン引数 `--targets`（デフォルト: `target_files.json`）の定義を明確に追記し、動作要件と実行手順のトリガー定義を一致させる。",
+    "proposed_fix": "15行目の「データ入力」の記述を以下のように修正する：\n- **データ入力**: コマンドライン引数 `--defects` で指定されたパス（デフォルト: `$APP_DATA_DIR/scratch/defects.jsonl`）から欠陥データファイル（`defects.jsonl`）を1行ずつ読み込み、パースすること (MUST)。また、検証対象となるファイルリストは、コマンドライン引数 `--targets` で指定された JSON ファイル（デフォルト: `target_files.json`）から読み込むこと (MUST)。"
+  },
+  {
+    "target": "/Users/ryota/.gemini/antigravity/scratch/verify_theorems_spec_v8.md",
+    "layer": "L3",
+    "critic_name": "Description Optimization Critic",
+    "severity": "中",
+    "pattern_class": "responsibility_overlap",
+    "location": "1. 動作要件 (Functional Requirements) - データ出力 - JSONメタデータ出力 (66行目)",
+    "title": "集計スクリプトにおける過剰なプロンプトインジェクション対策要件",
+    "criticism": "66行目において、「JSON出力に含まれる動的テキストフィールドについて、後続のAIエージェントにおけるプロンプトインジェクション攻撃を防止するため、制御用のプロンプト操作パターンを拒否するフィルタ...を実装すること」と要求している。しかし、本スクリプトは集計・検証を行うバッチスクリプトであり、出力された JSON は構造化データである。プロンプトインジェクションの防御責任は、この JSON を読み込んでプロンプトに組み立てる「後続のAIエージェント（またはそのシステム）」にあるべきであり、集計スクリプト側にフィルタを実装させるのは、システム全体のセキュリティ境界を曖昧にし、責務 of 重複や冗長なバリデーションロジックの埋め込みを招く。",
+    "improvement": "本スクリプトの責務を「構造的データとして明確に分離して出力すること」に限定し、文字列のコンテンツフィルタリング（インジェクション検知）は後続の LLM 呼出モジュールの責務とするよう、記述を修正して責務を整理する。",
+    "proposed_fix": "66行目の記述を以下のように修正する：\n- JSON出力に含まれる動的テキストフィールド（`criticism` や `improvement` 等）については、後続のAIエージェントがプロンプトへ安全に埋め込めるよう、他の制御データと混ざらないよう JSON 構造内でキーとして明確に分離して出力し、安全に引き渡すための構造的カプセル化を保証すること (MUST)。（※動的なプロンプト操作パターンの検知・拒否フィルタ自体は後続のエージェント側の責務とする）"
+  },
+  {
+    "target": "/Users/ryota/.gemini/antigravity/scratch/verify_theorems_spec_v8.md",
+    "layer": "L3",
+    "critic_name": "Description Optimization Critic",
+    "severity": "中",
+    "pattern_class": "description_inconsistency",
+    "location": "1. 動作要件 - 定理の統計的検証 - 欠陥数ゼロの例外処理 (32行目) 、および 3. 動作安全性 - 進捗ログの標準化 (124行目)",
+    "title": "異常警告とフェーズ遷移におけるログイベント名 WORKFLOW_PHASE_CHANGED の重複不整合",
+    "criticism": "32行目では、「すべての定理の分母が0となった場合」のデータ破損警告ログに対して、イベント名 `WORKFLOW_PHASE_CHANGED` を使用するように指示している。しかし、124行目では `WORKFLOW_PHASE_CHANGED` は「進捗フェーズの遷移状態（`setup`, `mapping`, `statistics`, `reporting`）」を示すために定義されている。データ破損による警告という異常系イベントに対して、正常系のフェーズ遷移と同じイベント名 `WORKFLOW_PHASE_CHANGED` を使用することは、ログ監視トリガーや集計システムでのイベントフィルタリングを著しく困難にし、運用時の監視エラーやトリガー不整合を誘発する。また、65行目で `hitl_required=true` の場合は `HITL_PENDING_APPROVAL` を出力すると定義されているため、32行目と65行目のどちらが適用されるべきかのルール記述にも矛盾が生じる。",
+    "improvement": "データ破損による「すべての定理の分母が0」の異常警告イベントには、フェーズ遷移用のイベント名ではなく、一意の警告イベント名（例: `DATA_CORRUPTION_DETECTED`）を割り当て、フェーズ遷移イベントと明確に分離する。また、`hitl_required` が有効になるため、65行目の仕様とも整合性を取る。",
+    "proposed_fix": "32行目の記述を以下のように修正する：\n一方で、入力された defects.jsonl が0バイトであるか、または defects.jsonl のパースで有効なレコードが1件も取得できなかったなどの例外的な処理エラーにより「すべての定理の分母が0」となった場合は、データ破損による異常とみなし、Markdownレポート内にオペレータの確認が必要な旨の警告項目「HITL確認要求」を明記し (MUST)、`structlog` を用いて `hitl_required=True` メタデータを含む警告ログ（`WARNING` レベル、イベント名 `DATA_CORRUPTION_DETECTED`）を出力し、オペレータに確認を促すこと (MUST)。（※この警告発生に伴い、後述の `HITL_PENDING_APPROVAL` イベントの構造化ログも出力すること）"
+  },
+  {
+    "target": "/Users/ryota/.gemini/antigravity/scratch/verify_theorems_spec_v8.md",
+    "layer": "L3",
+    "critic_name": "Description Optimization Critic",
+    "severity": "中",
+    "pattern_class": "description_ambiguity",
+    "location": "1. 動作要件 (Functional Requirements) - 定理の統計的検証、およびデータ出力 - JSONメタデータ出力",
+    "title": "検証判定結果（result）が合格/不合格時に取るべき値の定義漏れ",
+    "criticism": "仕様書内では、定理の検証結果として「合格」「不合格」の判定を行うこと（6行目）、また「データ破損や縮退運転により検証不可の場合は `UNVERIFIABLE` を判定結果（`result`）に設定する」（133行目）と記述されている。しかし、正常に検証が行われた場合の合格・不合格に対して、JSONメタデータ出力の `result` フィールドが取るべき具体的な値（例えば `\"PASS\"`/`\"FAIL\"` など）が一切定義されておらず、表現が曖昧である。このため、実装者や後続のエージェント（JSONをパースする側）で判定値の解釈にズレが生じ、自動修復や通知パイプラインの条件分岐が正常に動作しないリスクがある。",
+    "improvement": "各定理の検証判定結果を格納する JSON の `result` フィールドが取り得るすべての値の候補（合格時、不合格時、検証不可時）を仕様書で明示的に定義する。",
+    "proposed_fix": "63行目の記述を以下のように修正する：\n- **JSONメタデータ出力**: 後続のAIエージェントや検証パイプラインが自己反映（Self-Reflection）および自動修復のアクションを実行できるよう、検証結果の詳細（各定理の判定（合格時は `\"PASS\"`、不合格時は `\"FAIL\"`、検証不可時は `\"UNVERIFIABLE\"` を設定する `result` フィールド）、メトリクス数値、反例ファイルリスト、`criticism`、`improvement`、`counterexamples_truncated` (Boolean型)、`hitl_required` (Boolean型)、およびコマンドライン引数 `--workflow-context` で前述された任意の文字列）を含む構造化された JSON ファイルを、コマンドライン引数 `--output-json` で指定されたパス（デフォルト: `$APP_DATA_DIR/scratch/theorem_verification_results.json`）に書き出すこと (MUST)。"
+  }
+]

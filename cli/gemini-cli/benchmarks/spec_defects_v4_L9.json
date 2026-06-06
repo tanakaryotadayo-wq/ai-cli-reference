@@ -1,0 +1,46 @@
+[
+  {
+    "target": "/Users/ryota/.gemini/antigravity/scratch/verify_theorems_spec_v4.md",
+    "layer": "L9",
+    "critic_name": "Resilience Critic",
+    "severity": "中",
+    "pattern_class": "resilience_checkpoint_vulnerability",
+    "location": "3. 動作安全性 (Safety Rules) - チェックポイントと再開 (Checkpointing) (43行目)",
+    "title": "チェックポイント破損時のフォールバックおよびデータ整合性検証ルールの欠如",
+    "issue": "スクリプトが途中で異常終了した後にチェックポイントから再開する仕様（SHOULD）が提案されていますが、一時ファイル（`.verify_theorems_checkpoint`）自体が書き込み途中の強制終了などで破損している場合の動作（フォールバック）が規定されていません。また、再起動時に `defects.jsonl` のファイルサイズやハッシュ値、更新日時が変更されていた場合の整合性検証が定義されていないため、変更前の古い行番号から再開されることで、データの重複カウントや欠損、インデックス範囲外アクセスなどの予期しないエラーが発生するリスクがあります。",
+    "proposed_fix": "43行目を以下のように修正・拡充する:\n- **チェックポイントと再開 (Checkpointing)**: 処理の進捗状況（最後に読み込んだ defects.jsonl の行番号等）を定期的に一時ファイル（例: `.verify_theorems_checkpoint`）に永続化し、スクリプト再起動時にチェックポイントファイルが存在する場合はその中断行から処理を再開できるようにすること (SHOULD)。ただし、チェックポイントファイル自体のパースに失敗した場合は、安全にファイルを破棄して最初（0行目）から再処理すること (MUST)。また、チェックポイントデータには処理対象ファイルのサイズおよび最終更新日時を記録し、再起動時にこれらが一致しない場合はチェックポイントを破棄して最初から再処理すること (MUST)。"
+  },
+  {
+    "target": "/Users/ryota/.gemini/antigravity/scratch/verify_theorems_spec_v4.md",
+    "layer": "L9",
+    "critic_name": "Resilience Critic",
+    "severity": "高",
+    "pattern_class": "automation_feedback_unsafe",
+    "location": "1. 動作要件 (Functional Requirements) - データ出力 (23行目)",
+    "title": "自己反映ループ用JSONにおける検証信頼度・部分処理ステータスの定義欠如",
+    "issue": "後続のエージェントや検証パイプラインが自己反映や自動修復を行うための構造化JSONを出力すると規定されていますが、データのパースエラーによる一部スキップ（Golden Ruleによる5%未満のスキップ）や、部分的なI/Oエラーが発生した状態でも、一律で同じスキーマのJSONが出力される設計となっています。後続のエージェントが「一部のデータが欠損した不完全な検証結果」を「完全な結果」として誤認して自己反映を実行すると、誤った修正アクションやループの暴走を誘発する恐れがあります。検証結果の信頼性や部分処理状態を示すメタデータがJSONに含まれるべきです。",
+    "proposed_fix": "23行目を以下のように修正・拡充する:\n  - 同時に、後続のAIエージェントや検証パイプラインが自己反映（Self-Reflection）および自動修復のアクションを実行できるよう、検証結果の詳細（各定理の判定、メトリクス数値、反例ファイルリストなど）を含む構造化された JSON ファイルを、指定されたパス（デフォルト `/Users/ryota/.gemini/antigravity/scratch/theorem_verification_results.json`）に書き出すこと (MUST)。このJSONには、検証の完全性を示すメタデータ（`data_integrity_status`（`\"complete\"` または `\"partial\"`）、スキップされた無効レコード件数、総読み込みレコード件数）を含めること (MUST)。メタデータが `\"partial\"` の場合、後続エージェントは自動修復を行わずオペレータ確認を要求する設計とすること。"
+  },
+  {
+    "target": "/Users/ryota/.gemini/antigravity/scratch/verify_theorems_spec_v4.md",
+    "layer": "L9",
+    "critic_name": "Resilience Critic",
+    "severity": "中",
+    "pattern_class": "recursion_guard_incomplete",
+    "location": "3. 動作安全性 (Safety Rules) - 再帰呼び出しガード (41行目)",
+    "title": "環境変数 `AGENT_EXECUTION_DEPTH` のインクリメントと伝播仕様の欠如",
+    "issue": "再帰的なエージェント呼び出しによる無限ループを防ぐため、環境変数 `AGENT_EXECUTION_DEPTH` の閾値（5回）チェックを行うとされていますが、このスクリプト自身が他のツールやエージェントプロセスを呼び出す、あるいは自身が再試行やパイプラインとして自身をサブプロセス起動する場合に、この環境変数をインクリメントして子プロセスに伝播（継承）させる実装要件が定義されていません。これにより、実際には呼び出し深さが深くなっているにもかかわらず、親の深度値が引き継がれず、無限ループ検知が機能しなくなる危険性があります。",
+    "proposed_fix": "41行目を以下のように修正・拡充する:\n- **再帰呼び出しガード**: エージェント実行環境下において、スクラッチのスクリプトが再帰的に呼び出されるのを防止するため、環境変数で引き渡される実行深度（`AGENT_EXECUTION_DEPTH`）をチェックし、閾値（5回）を超えた場合はエラーを出力して終了コード `3` で即座に実行を停止すること (MUST)。また、スクリプト内から別プロセス（自動修復ツールや自身を呼び出すパイプライン等）を呼び出す場合は、現在の `AGENT_EXECUTION_DEPTH` の値をインクリメント（+1、環境変数未定義の場合は1とする）して子プロセスに環境変数を引き渡すこと (MUST)。"
+  },
+  {
+    "target": "/Users/ryota/.gemini/antigravity/scratch/verify_theorems_spec_v4.md",
+    "layer": "L9",
+    "critic_name": "Resilience Critic",
+    "severity": "中",
+    "pattern_class": "graceful_degradation_missing",
+    "location": "2. Task Execution Workflow (実行手順) - 1 (27行目) および 3. 動作安全性 (Safety Rules) - Stop Rule (40行目)",
+    "title": "対象ファイル部分欠損時の縮退検証（Graceful Degradation）仕様の欠如",
+    "issue": "実行手順において、`--targets` で指定されたJSONファイルが存在しない場合や無効なパスである場合は終了コード `1` で異常終了する（All-or-Nothing）と規定されていますが、対象ファイルリスト（デフォルト88件）の一部（例: ネットワーク上のファイル共有の一時的切断や、特定ファイルのパーミッションエラー等）が読み込めない、あるいは `defects.jsonl` 内の参照先ファイルの一部が存在しない場合の縮退運転（Graceful Degradation）について考慮されていません。全ファイルの1件でも読み込めないだけでシステム全体がクラッシュ（異常終了）する設計は復元力が低いです。アクセス可能な範囲で検証を行い「暫定検証結果」を出力する縮退運転の余地を持たせるべきです。",
+    "proposed_fix": "27行目の末尾または3. 動作安全性のセクションに以下の縮退運転仕様を追加する:\n- **部分欠損時の縮退運転 (Graceful Degradation)**: `--targets` で指定されたファイル自体が存在しない場合は終了コード `1` で終了するが、指定されたターゲットファイルリストのうち、一部のファイルの読み込みに失敗した場合（パーミッションエラー等）は、それらのファイルを検証分母から除外し、残りのアクセス可能なファイルのみで暫定検証を実行すること (SHOULD)。この場合、出力レポートおよび JSON 内に縮退運転モードで検証した旨と、アクセス不能だったファイルリストを警告情報として明記し、終了コード `0` で正常終了すること (MUST)。"
+  }
+]

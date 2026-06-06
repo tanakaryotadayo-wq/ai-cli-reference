@@ -1,0 +1,35 @@
+[
+  {
+    "target": "/Users/ryota/.gemini/antigravity/scratch/verify_theorems_spec_v5.md",
+    "layer": "L6",
+    "critic_name": "State Memory Critic",
+    "severity": "中",
+    "pattern_class": "memory_limit_vulnerability",
+    "location": "## 1. 動作要件 (Functional Requirements) - メモリフットプリント制限 (8行目)",
+    "title": "大規模データ処理時におけるメモリ上の集計状態変数の上限およびコンパクション要件の欠如",
+    "issue": "仕様書では、詳細なオブジェクトをメモリ上に保持せず、集計用の最小限 of メトリクス（ファイルIDごとの pattern_class カウントなど）のみをメモリに保持することでメモリ制限に対応するとしているが、対象ファイル数や欠陥レコード数が膨大になった場合のメモリ使用量の上限（バッファ上限）や、不要になったエントリのコンパクション（集約・解放）に関する設計が規定されていない。これにより、大規模プロジェクトの監査においてメモリ圧迫によるOOMが発生するリスクがある。",
+    "proposed_fix": "集計データ構造のメモリ上限（例: 対象ファイル数最大10,000件）を定義し、それを超える場合は集計単位をストリーム内でマージ・圧縮するか、あるいはメモリ上ではなく一時的なファイルベースのデータベース（SQLiteなど）へオフロードするなどの上限管理・コンパクション要件を追加する。"
+  },
+  {
+    "target": "/Users/ryota/.gemini/antigravity/scratch/verify_theorems_spec_v5.md",
+    "layer": "L6",
+    "critic_name": "State Memory Critic",
+    "severity": "中",
+    "pattern_class": "missing_temp_file_cleanup",
+    "location": "## 1. 動作要件 (Functional Requirements) - データ出力 (21行目)",
+    "title": "アトミック書き込み用の一時ファイルおよびバックアップファイルのライフサイクル管理・クリーンアップ漏れ",
+    "issue": "書き込み競合やクラッシュを防ぐために一時ファイル書き込み後にアトミックリネームする手法を指示しているが、書き込み途中でのクラッシュ時に残存する一時ファイル（`.tmp`等）の自動クリーンアップや、バックアップファイル（`.bak`）の世代管理上限（バッファ上限）が定義されていない。これが繰り返されると、ストレージの不要な圧迫や不整合状態の原因となる。",
+    "proposed_fix": "一時ファイルのファイル名パターン（例: `.{filename}.tmp`）を規定し、スクリプト起動時の `setup` フェーズにおいて、残存する一時ファイルを自動的に検知・削除するクリーンアップ要件を追加する。また、バックアップファイルは最大1世代とし、上書き前に古いバックアップを削除してストレージを維持する仕様を明記する。"
+  },
+  {
+    "target": "/Users/ryota/.gemini/antigravity/scratch/verify_theorems_spec_v5.md",
+    "layer": "L6",
+    "critic_name": "State Memory Critic",
+    "severity": "高",
+    "pattern_class": "state_variable_lifecycle_leak",
+    "location": "## 3. 動作安全性 (Safety Rules) - 再帰呼び出しガード (54行目)",
+    "title": "再帰呼び出しガード用の環境変数のデクリメント/クリーンアップ仕様の欠落による誤検知リスク",
+    "issue": "再帰呼び出しを防止するために環境変数 `AGENT_EXECUTION_DEPTH` をインクリメントする仕様があるが、スクリプトが正常終了または特定の処理フェーズを完了した際、あるいはエラーから回復した際のデクリメントやクリーンアップの仕様が記述されていない。これにより、同一環境でスクリプトが順次連続実行（ループ実行など）された場合に、再帰呼び出しではないにもかかわらず累積値が閾値（5回）に達して異常終了してしまう状態管理のバグ（ライフサイクルリーク）が発生する。",
+    "proposed_fix": "スクリプトが正常終了する直前、あるいは終了処理ハンドラーにおいて、自身がインクリメントした `AGENT_EXECUTION_DEPTH` をデクリメントする、またはサブプロセス呼び出し時のみ環境変数を伝播させ、メインプロセスの実行後には状態を復元（クリア）する仕様を明記する。"
+  }
+]

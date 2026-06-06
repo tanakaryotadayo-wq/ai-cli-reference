@@ -1,0 +1,50 @@
+[
+  {
+    "target": "/Users/ryota/.gemini/antigravity/scratch/verify_theorems_spec_v7.md",
+    "layer": "L5",
+    "critic_name": "User Experience Critic",
+    "severity": "高",
+    "pattern_class": "incomplete_execution_workflow",
+    "location": "## 2. Task Execution Workflow (実行手順) (57-94行目)",
+    "title": "実行ワークフローの時系列一貫性と正常系クリーンアップ手順の欠如",
+    "criticism": "現在の実行手順は『準備』『実行』『監視』『リカバリ』に細分化されており、一連のタスクライフサイクルが時系列に沿った単一のシーケンスとして統合されていません。特に、正常終了時の確認ステップや一時ファイルのクリーンアップといった『正常系の後続手順』が欠落しているため、自動実行エンジンやオペレーターがタスク完了状態の成否を客観的に判定できず、実行時UXの整合性が損なわれます。",
+    "improvement": "準備から正常完了、異常リカバリまでを単一の流れ（1〜5など）に統合した番号付きワークフローに再設計し、正常完了時の成果物整合性確認および後処理手順を明文化します。",
+    "proposed_fix": "## 2. Task Execution Workflow (実行手順)\n\n### オペレーター/エージェント作業ワークフロー\n\n1. **事前準備 (MUST)**\n   - 監査対象のパスリストが記述された JSON ファイル `target_files.json` を作成し、プロジェクトのルートディレクトリまたは指定された作業ディレクトリに配置すること (MUST)。\n   - 欠陥データ `$APP_DATA_DIR/scratch/defects.jsonl` が存在し、読み取り可能であることを確認すること (MUST)。\n   - 実行環境に `uv` がインストールされており、仮想環境が有効化されていることを確認すること (MUST)。\n\n2. **実行コマンドと引数指定 (MUST)**\n   - スクリプトは以下のコマンドで非対話的に実行すること (MUST)。\n     ```bash\n     uv run verify_theorems.py \\\n       --targets target_files.json \\\n       --defects $APP_DATA_DIR/scratch/defects.jsonl \\\n       --output $APP_DATA_DIR/scratch/theorem_verification_results.md \\\n       --output-json $APP_DATA_DIR/scratch/theorem_verification_results.json\n     ```\n   - デバッグ時は `--debug` オプションを付与し、処理の各ステップやパース詳細をログ出力すること (MUST)。\n\n3. **実行中進捗の監視 (MUST)**\n   - 標準出力に `structlog` から出力される JSON 形式のログを監視すること (MUST)。\n   - 進捗フェーズ（`\"setup\"`, `\"mapping\"`, `\"statistics\"`, `\"reporting\"`）の遷移が正しく行われ、最終的に `\"reporting\"` フェーズが完了することを確認すること (MUST)。\n   - もしリトライログ（`event='io_retry_attempted'`）が出力された場合は、エラー内容を確認しつつ一時的なI/O回復を待つこと。\n\n4. **正常終了時の検証とクリーンアップ (MUST)**\n   - 終了コード `0` で完了したことを確認すること (MUST)。\n   - 出力された JSON メタデータ `theorem_verification_results.json` および Markdown レポート `theorem_verification_results.md` が正常に生成され、シンボリックリンクでないこと、パーミッションが `0600` であることを確認すること (MUST)。\n   - 一時ファイル（`.tmp`）が残存せず、正しく削除されていることを確認すること (MUST)。\n   - ロックファイル `$APP_DATA_DIR/scratch/execution_depth.lock` が正常にデクリメントまたは削除されていることを確認すること (MUST)。\n\n5. **異常終了時のリカバリ手順 (MUST)**\n   スクリプトが異常終了した場合、オペレータは終了コードに応じて以下の手順を実行すること (MUST)。\n   - **終了コード 1（I/Oエラー、セキュリティ違反、無効引数）**:\n     1) `structlog` のエラーログからエラー原因のファイルパスおよびセキュリティバリデーションエラーの内容を確認する。\n     2) 対象パスが `$APP_DATA_DIR` 等の許可ディレクトリ内にあるか確認する。\n     3) ディレクトリの書き込み権限や空き容量を修正する。\n     4) アトミック書き込みの過程でリネーム（置換）に失敗し、既存のレポートファイルが破損または消失した疑いがある場合は、バックアップファイル（`.bak`）から手動で復元（例: `mv report.bak report`）を実行する。\n   - **終了コード 2（パースエラーしきい値超過）**:\n     1) ログおよび最終レポート（出力されている場合）の「無効データ」セクションから、エラーとなった行番号と生データを確認する。\n     2) `defects.jsonl` の該当箇所を修正して JSONL のフォーマットを満たすようにする。\n   - **終了コード 3（再帰制限超過）**:\n     1) スクリプトが無限ループや無制限の再起動に陥っていないかログを確認する。\n     2) 安全を確認した上で、一時ディレクトリのロックファイル `$APP_DATA_DIR/scratch/execution_depth.lock` を手動で削除し、実行カウンタをリセットする。"
+  },
+  {
+    "target": "/Users/ryota/.gemini/antigravity/scratch/verify_theorems_spec_v7.md",
+    "layer": "L5",
+    "critic_name": "User Experience Critic",
+    "severity": "高",
+    "pattern_class": "conflicting_golden_rule_zero_denominator",
+    "location": "## 1. 動作要件 内 「統計的検証 (28-29行目)」および「HITL警告 (49行目)」",
+    "title": "欠陥数ゼロ（分母ゼロ）における判定ロジックの矛盾と安全性の欠如",
+    "criticism": "29行目では『分母が0の場合は健全な合格としHITL警告不要』としている一方で、49行目では『分母が0となったことが疑われる場合に限りHITL確認要求を明記し…』とあり、判定の競合が生じています。また、入力指定ミスや空ファイルが与えられた場合に、警告なしで『健全な合格』と判定するデフォルト動作（Golden Rule）は、サイレントバグや監査の不完全性を覆い隠す致命的なセキュリティリスクとなります。",
+    "improvement": "分母が0（検出された対象欠陥が0件）の場合は、データの整合性やパス指定ミスの可能性を排除するため、デフォルト動作（Golden Rule）として一律で暫定『判定保留（要確認）』とし、HITL警告（`hitl_required=true`、イベント `HITL_PENDING_APPROVAL`）を出力する仕様に統一します。",
+    "proposed_fix": "- 28-29行目の差し替え:\n- **反例検証 (Counterexample Analysis)**: 各定理に対応する `pattern_class` が検出されている（＝ルールが未定義である）ファイル群を分母とし、その中で、L2 または L4 レイヤー（`layer` フィールドの値が `"L2"` または `"L4"`）かつ深刻度（`severity` フィールドの値が `"高"` または `"致命的"`）である欠陥が1件も検出されていないファイル（＝反例）の割合（分子 / 分母）が **10%以下** であるかを判定すること (MUST)。\n  - **欠陥数ゼロ（分母ゼロ）時の安全フォールバック (Golden Rule)**: ただし、分母が0（該当する欠陥が1件も検出されていない）の場合は、健全な合格ケースと入力データの指定ミス・破損による空データの区別が困難であるため、安全側に倒して暫定的に判定結果を保留し、必ずオペレーターによる確認が必要な HITL 警告（`hitl_required` = `true`）として処理し、`structlog`（イベント `event='HITL_PENDING_APPROVAL'`）を出力すること (MUST)。単に欠陥検出数が 0 件であっても、自動判定のみで合格としてはならない。\n\n- 49行目の差し替え:\n- **HITL警告**: 検証において、該当する欠陥が1件も検出されず「分母が0」となった場合、または無効データの多発やデータの破損等、例外的な処理エラーにより「分母が0」となったことが疑われる場合に、Markdownレポート内にオペレータの確認が必要な旨の警告項目「HITL確認要求」を明記し (MUST)、`structlog` を用いて `hitl_required=True` メタデータを含む警告ログ（`WARNING` レベル）を標準出力に出力し、オペレータに確認を促すこと (MUST)。"
+  },
+  {
+    "target": "/Users/ryota/.gemini/antigravity/scratch/verify_theorems_spec_v7.md",
+    "layer": "L5",
+    "critic_name": "User Experience Critic",
+    "severity": "中",
+    "pattern_class": "missing_retry_progress_ux",
+    "location": "## 3. 動作安全性 内 「Stop Rule (110-112行目)」",
+    "title": "一時的I/Oエラー時の指数バックオフ中における進捗監視ログの欠如",
+    "criticism": "I/Oエラーに対して最大5回のリトライ（指数バックオフ）を実行する仕様ですが、リトライ中の実行状態（現在の試行回数や待ち時間、発生エラー）が進捗フェーズ（79行目）や構造化ログに定義されていません。このため、リトライ実行中にプロセスが完全にハングアップしたように見え、外部の呼び出し元（親エージェントやCI/CD）がタイムアウトで強制終了してしまうUX上のリスクがあります。",
+    "improvement": "リトライのループ処理中において、`event='io_retry_attempted'` などの一意のイベント名、現在の試行回数 `attempt`、最大試行回数 `max_attempts`、次のリトライまでの秒数 `backoff_duration`、および発生した例外メッセージを `structlog` で即座に出力することを義務付けます。",
+    "proposed_fix": "- **Stop Rule (異常停止条件と指数バックオフ)**: \n  - ファイルの読み込みまたは書き込みにおいて、回復不能な I/O エラー（`PermissionError`, `FileNotFoundError`）が発生した場合、または一時的な I/O エラー（`BlockingIOError`, `TimeoutError`）が発生した場合は、ジッターを伴う指数バックオフ（初期待ち時間 0.5 秒、乗数 2、最大待ち時間 5 秒、最大リトライ回数 5 回）を適用したリトライループを実装すること (MUST)。\n  - リトライ試行の都度、監視およびデバッグの目的から、`structlog` を用いて一意のイベント名 `event='io_retry_attempted'` とともに、現在の試行回数 `attempt`、最大試行回数 `max_attempts`、次の試行までの待ち秒数 `backoff_duration`、および発生した一時例外メッセージを含む構造化ログを標準出力に即座に出力すること (MUST)。\n  - リトライ回数を超過した、あるいは 429 レート制限などで即時にフォールバックが必要な場合は、実行を即座に停止し、`structlog` で例外情報（`exc_info=True` を指定し、適切にフォーマットされたスタックトレース）と、マスク処理済みの詳細な診断コンテキスト情報（エラーが発生したファイルパス、実行中のアトミックシーケンスフェーズ、処理中行番号、リトライ試行回数等）を `ERROR` または `CRITICAL` レベルで出力した上で、終了コード `1` で異常終了すること (MUST)。"
+  },
+  {
+    "target": "/Users/ryota/.gemini/antigravity/scratch/verify_theorems_spec_v7.md",
+    "layer": "L5",
+    "critic_name": "User Experience Critic",
+    "severity": "中",
+    "pattern_class": "unfriendly_error_recovery_ux",
+    "location": "## 3. 動作安全性 内 「実行環境ガード (125行目)」",
+    "title": "グローバル環境実行防止（実行環境ガード）におけるリカバリ案内UXの不足",
+    "criticism": "グローバルなPython環境で実行されたことを検知した際に終了コード1で即座に異常終了しますが、この際に標準エラーまたはログメッセージに、開発者やオペレータが次に取るべき解決策（例: `uv run` の使用や、`source .venv/bin/activate` による仮想環境の有効化手順）が提示されません。単にエラーで停止するだけでは、オペレータ側のリカバリ速度が著しく低下します。",
+    "improvement": "実行環境ガードのチェック失敗による異常終了時に、ログメッセージまたは標準エラー出力の診断コンテキストに、具体的な推奨リカバリコマンド（`uv run verify_theorems.py` もしくは仮想環境アクティベート方法）を含めることを仕様に明記します。",
+    "proposed_fix": "- **実行環境ガード**: スクリプトの実行は、`uv run` またはアクティベートされた仮想環境（`.venv`）内で行われていること（例：環境変数 `VIRTUAL_ENV` が設定されていること、または `sys.prefix != sys.base_prefix` であること）をチェックすること (MUST)。グローバルな Python 環境で直接実行されたことを検知した場合は、`structlog` で `event='global_python_execution_prevented'` というエラーログを出力し、かつエラーメッセージまたは診断コンテキストに「`uv run verify_theorems.py` を使用するか、仮想環境を有効化してください」という具体的な回復コマンドの案内を含めた上で、終了コード `1` で即座に異常終了すること (MUST)。"
+  }
+]

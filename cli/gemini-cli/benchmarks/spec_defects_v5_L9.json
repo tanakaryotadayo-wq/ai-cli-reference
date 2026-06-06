@@ -1,0 +1,46 @@
+[
+  {
+    "target": "/Users/ryota/.gemini/antigravity/scratch/verify_theorems_spec_v5.md",
+    "layer": "L9",
+    "critic_name": "Resilience Critic",
+    "severity": "高",
+    "pattern_class": "insufficient_recursion_guard_protocol",
+    "location": "## 3. 動作安全性 (Safety Rules) - 再帰呼び出しガード (54行目)",
+    "title": "無限再帰呼び出しガードのプロセス間環境変数伝播プロトコルの不足",
+    "issue": "仕様書54行目で無限再帰呼び出しを防止するために環境変数 AGENT_EXECUTION_DEPTH のチェックおよびインクリメントが義務付けられていますが、Pythonの os.environ への設定変更は現在のプロセスおよびその後に起動される子プロセスにしか引き継がれません。後続のAIエージェントや検証パイプラインが別セッションや独立したプロセス（非同期ジョブ、別コンテナ、リモート実行など）として実行された場合、この環境変数が引き継がれず、無限再帰ガードが機能しない恐れがあります。プロセス境界を跨ぐ execution depth の引き継ぎ方法、または永続的な実行軌跡追跡メカニズム（ステートファイルや共通コンテキストへの書き出し等）の規定が不足しています。",
+    "proposed_fix": "- **再帰呼び出しガード**: エージェント実行環境下におけるスクリプトの無限再帰呼び出しを防止するため、スクリプトの起動直後（他のいかなる初期化、引数パース、ファイルI/Oよりも前）に、環境変数 `AGENT_EXECUTION_DEPTH` をチェックすること (MUST)。環境変数が未定義の場合は `1` としてみなし、定義されている場合は現在の値をインクリメントして環境変数に再設定すること (MUST)。また、外部プロセスや後続のエージェント（自動修復パイプライン等）を呼び出す場合は、必ず現在のインクリメント後の `AGENT_EXECUTION_DEPTH` の値を環境変数または起動引数として引き継ぐ（伝播させる）こと (MUST)。インクリメント後の値が閾値（5回）を超えた場合は、標準エラー出力にエラーを出力し、終了コード `3` で即座に実行を停止すること (MUST)。"
+  },
+  {
+    "target": "/Users/ryota/.gemini/antigravity/scratch/verify_theorems_spec_v5.md",
+    "layer": "L9",
+    "critic_name": "Resilience Critic",
+    "severity": "中",
+    "pattern_class": "missing_automation_loop_signaling",
+    "location": "## 2. Task Execution Workflow (実行手順) - 5. レポート出力 (48行目)",
+    "title": "検証不合格時における自動化ループへのシグナリング規定の不足",
+    "issue": "仕様書48行目において「定理の検証結果が『不合格』となった場合でも、スクリプト自体の処理が正常に完了した場合は、終了コード 0 で正常終了すること」と規定されています。これにより、検証自動化ループが終了コードのみで成否を判定している場合、不合格の事実を検知できずに自己修復ステップをスキップして終了してしまうリスクが生じます。終了コード 0 を維持しつつ、自動検証ループ（後続のAIエージェント等）に対して「定理が不合格であったため自己修復が必要である」というシグナルを確実に伝える手段（JSONレポートの特定キーの確認や、標準出力への特定シグネチャの出力など）のハンドリング方針が明記されていません。",
+    "proposed_fix": "- レポート出力および自動検証ループとの連携 (MUST): 定理の検証結果が「不合格」となった場合でも、スクリプト自体の処理が正常に完了した場合は、終了コード `0` で正常終了すること (MUST)。検証の合否は出力されるレポート内の判定フィールドおよび JSON の特定の合否フラグ（例: `all_passed: false`）で表現し、終了コードをもって検証の成否を表してはならない (MUST NOT)。後続の自動修復パイプラインは、終了コードではなく JSON ファイルの合否フラグ、または標準出力に出力される構造化ログの特定イベント（例: event: \"verification_failed\"）をトリガーとして自己修復を稼働させるように設計すること (MUST)。"
+  },
+  {
+    "target": "/Users/ryota/.gemini/antigravity/scratch/verify_theorems_spec_v5.md",
+    "layer": "L9",
+    "critic_name": "Resilience Critic",
+    "severity": "中",
+    "pattern_class": "missing_graceful_degradation_policy",
+    "location": "## 3. 動作安全性 (Safety Rules) - Stop Rule (53行目) / ## 1. 動作要件 (Functional Requirements) - データ出力 (20-25行目)",
+    "title": "出力エラー発生時の縮退運転（Graceful Degradation）規定の不足",
+    "issue": "仕様書では、MarkdownレポートとJSONデータの両方の書き込みを義務付けており、かつI/Oエラーが発生した場合は Stop Rule（53行目）に基づき終了コード 1 で異常終了することになっています。しかし、例えばMarkdownレポートの書き込みのみが一時的に失敗し、JSONデータの出力には成功できる場合や、ディスク容量不足等で一意のファイル書き込みが失敗した場合に、自己反映や検証記録を完全に失うことなく、部分的なログ出力（標準出力へのJSONダンプ等）に切り替えて動作を継続させるなどの「縮退運転（Graceful Degradation）」の規定がありません。これにより、書き込み先の局所的な障害が検証プロセス全体の完全な停止を招いてしまいます。",
+    "proposed_fix": "- **部分故障時の縮退運転**: 指定されたファイルパス（Markdown/JSON）への書き込みが永続的なI/Oエラーやディスク満杯などにより失敗した場合、スクリプトは即座に異常終了せず、代替手段として検証結果のJSONデータを標準出力（`structlog` の特定のログエントリ、例: `event: "verification_summary_backup"`）にダンプし、可能な限り後続の自己反映プロセスがデータを受け取れるように縮退運転（Graceful Degradation）を試みること (MUST)。この縮退書き出しが行われた場合、スクリプトは警告ログを記録した上で終了コード `0` で正常終了するか、または部分完了として終了コードを制御すること。"
+  },
+  {
+    "target": "/Users/ryota/.gemini/antigravity/scratch/verify_theorems_spec_v5.md",
+    "layer": "L9",
+    "critic_name": "Resilience Critic",
+    "severity": "中",
+    "pattern_class": "missing_hitl_recovery_protocol",
+    "location": "## 1. 動作要件 (Functional Requirements) - データ出力 (25行目)",
+    "title": "HITL確認要求（hitl_required）後における自己修正ループの復帰プロトコルの不足",
+    "issue": "25行目で「hitl_required フラグが true の場合、後続の自動修復パイプラインは自動実行を中断し、人間の確認を待たなければならない」とされています。しかし、人間による介入（手動修正）が完了した後に、エージェントや検証パイプラインがどのようにして「確認・修正完了」を安全に検知し、自己修正・再検証の軌道を再開すべきかの復帰プロトコル（例: 手動確認完了を示すシグナルファイルの配置、環境変数のクリア、特定のコマンド起動引数の使用など）が規定されていません。これにより、中断した自動化ループが再開できずに永続的にスタックするか、あるいは意図しないタイミングで誤動作するリスクがあります。",
+    "proposed_fix": "- `hitl_required` フラグが `true` の場合、後続の自動修復パイプラインは自動実行を中断し、人間の確認を待たなければならない (MUST)。人間による確認・修正が完了した後は、検証ループを再開するために、特定のトリガー（例: 再検証スクリプトの再実行、または確認完了を示す一時フラグファイルの削除）を使用する復帰プロトコルを定義し、自動修復パイプラインが安全にループを復旧できるように設計すること (MUST)。"
+  }
+]

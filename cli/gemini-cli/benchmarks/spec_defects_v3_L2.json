@@ -1,0 +1,57 @@
+[
+  {
+    "target": "/Users/ryota/.gemini/antigravity/scratch/verify_theorems_spec_v3.md",
+    "layer": "L2",
+    "critic_name": "Logic Integrity Critic",
+    "severity": "高",
+    "pattern_class": "zero_division_vulnerability",
+    "location": "## 1. 動作要件 (Functional Requirements) - 影響度 (Impact) (13行目)",
+    "title": "影響度（深刻度比率）計算におけるゼロ除算の考慮漏れ",
+    "issue": "定理に対応する pattern_class の欠陥が検出されなかった場合（検出数 = 0）、影響度（深刻度比率）の計算において分母が 0 となり、ゼロ除算によるランタイムエラー（ZeroDivisionError 等）が発生します。反例検証の項にはゼロ除算防止策が明記されていますが、影響度の項にはその考慮がありません。",
+    "proposed_fix": "「- **影響度 (Impact)**: 各定理に対応する検出された欠陥のうち、深刻度（`severity`）が「高」または「致命的」である割合（深刻度比率）が **50%以上** であるかを検証すること (MUST)。」の直後に、以下の文言を追加する：\n「ただし、対応する欠陥が1件も検出されていない場合は、ゼロ除算を防止するため深刻度比率を 0% として処理し、当該定理は基準を満たしていない（不合格）と判定すること (MUST)。」"
+  },
+  {
+    "target": "/Users/ryota/.gemini/antigravity/scratch/verify_theorems_spec_v3.md",
+    "layer": "L2",
+    "critic_name": "Logic Integrity Critic",
+    "severity": "中",
+    "pattern_class": "ambiguous_logic_definition",
+    "location": "## 1. 動作要件 (Functional Requirements) - 反例検証 (Counterexample Analysis) (14行目)",
+    "title": "反例検証における『欠陥』の適用範囲の曖昧さ",
+    "issue": "「その中で L2 または L4 レイヤーかつ深刻度（`severity`）が「高」または「致命的」である欠陥が1件も検出されていないファイル（＝反例）」と記述されていますが、この「欠陥」が「当該定理に対応する pattern_class の欠陥」のみを指すのか、「ファイル全体で検出されたすべての欠陥」を指すのかが曖昧です。文脈上は当該定理の pattern_class に関する欠陥と解釈するのが自然ですが、明記されていないため実装者の解釈によって判定ロジックが揺れる可能性があります。",
+    "proposed_fix": "「その中で L2 または L4 レイヤーかつ深刻度（`severity`）が「高」または「致命的」である欠陥が1件も検出されていないファイル（＝反例）」の部分を以下のように修正する：\n「その中で、当該定理に対応する pattern_class の欠陥のうち、L2 または L4 レイヤーかつ深刻度（`severity`）が「高」または「致命的」である欠陥が1件も検出されていないファイル（＝反例）」"
+  },
+  {
+    "target": "/Users/ryota/.gemini/antigravity/scratch/verify_theorems_spec_v3.md",
+    "layer": "L2",
+    "critic_name": "Logic Integrity Critic",
+    "severity": "中",
+    "pattern_class": "parameter_inconsistency",
+    "location": "## 1. 動作要件 (9行目) および ## 2. Task Execution Workflow (18行目)",
+    "title": "再現性（検出率）計算における分母ファイル数のパラメータ不整合",
+    "issue": "動作要件では「全88ファイル中30%以上」と固定値 (88) を基準とした検出率の計算を要求している一方で、実行手順では対象ファイルのパスリストを外部ファイルや引数から動的に読み込む（可変長である）設計を推奨しています。読み込まれたファイル数が 88 件以外であった場合、再現性計算の分母を動的な読み込み件数にするのか、固定値 88 にするのかについて論理的な矛盾（パラメータ不整合）が生じます。",
+    "proposed_fix": "再現性の項を以下のように修正する：\n「- **再現性 (Reproducibility)**: 各定理に対応する以下の `pattern_class` が、監査対象 of 全ファイル（読み込まれたパスリストの総件数。デフォルト88件）中 **30%以上** で検出されていることを検証すること (MUST)。」"
+  },
+  {
+    "target": "/Users/ryota/.gemini/antigravity/scratch/verify_theorems_spec_v3.md",
+    "layer": "L2",
+    "critic_name": "Logic Integrity Critic",
+    "severity": "中",
+    "pattern_class": "incomplete_logic_definition",
+    "location": "## 1. 動作要件 (Functional Requirements) - 最小作用ワークフロー定理 (12行目)",
+    "title": "最小作用ワークフロー定理における複数 pattern_class の集計ロジックの欠落",
+    "issue": "最小作用ワークフロー定理において、`missing_execution_workflow` と `missing_workflow` の論理和（OR）を計算するロジックが再現性（検出率）についてのみ記述されており、影響度（深刻度比率）および反例検証（反例比率）においてこの2つの pattern_class の欠陥をどのように合算・集計して評価するのかが明記されていません。",
+    "proposed_fix": "最小作用ワークフロー定理の定義の後に、以下の補足を追加する：\n「影響度および反例検証の計算においても、これら2つの pattern_class の欠陥を同一 of 定理カテゴリとして合算（マージ）した欠陥集合を対象として集計を行うこと (MUST)。」"
+  },
+  {
+    "target": "/Users/ryota/.gemini/antigravity/scratch/verify_theorems_spec_v3.md",
+    "layer": "L2",
+    "critic_name": "Logic Integrity Critic",
+    "severity": "中",
+    "pattern_class": "missing_boundary_condition",
+    "location": "## 2. Task Execution Workflow (18-20行目)",
+    "title": "欠陥ゼロのファイルを考慮したデータマッピングロジックの欠落",
+    "issue": "defects.jsonl からのデータ読み込みとマッピングにおいて、欠陥が1件も検出されていない（defects.jsonl にレコードが存在しない）ファイルの扱いが曖昧です。対象ファイルリストに含まれるが defects.jsonl に存在しないファイルを明示的に「検出数 0」としてマッピングに含めなければ、再現性（検出率）の計算において分母と分子が正しく一致せず、検出率が異常に高くなる（defects.jsonl にあるファイルのみを分母として計算してしまう）バグの原因になります。",
+    "proposed_fix": "「2. defects.jsonl をパースし、ファイルごとの欠陥検出状況をマッピングする (MUST)。」を以下のように修正する：\n「2. defects.jsonl をパースし、読み込んだ対象ファイルリストの全ファイルに対して、欠陥検出状況をマッピングする (MUST)。defects.jsonl に記録がないファイルは、欠陥検出数 0 件の正常ファイルとして明示的にマッピングすること (MUST)。」"
+  }
+]

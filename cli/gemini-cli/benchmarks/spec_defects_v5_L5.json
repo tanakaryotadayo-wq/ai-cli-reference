@@ -1,0 +1,35 @@
+[
+  {
+    "target": "/Users/ryota/.gemini/antigravity/scratch/verify_theorems_spec_v5.md",
+    "layer": "L5",
+    "critic_name": "User Experience Critic",
+    "severity": "高",
+    "pattern_class": "missing_execution_workflow",
+    "location": "## 2. Task Execution Workflow (実行手順) (28-49行目)",
+    "title": "オペレーター向け実行手順における具体的コマンドおよび検証ステップの欠如",
+    "issue": "「2. Task Execution Workflow (実行手順)」において、事前準備や実行フェーズが記述されているものの、オペレーターや自動化エージェントが実際にスクリプトを起動するための具体的なコマンド実行例や、実行後の「終了コードの検証」「構造化ログの確認」「出力レポートの確認」といった一連の具体的なステップバイステップの手順が番号付きで記述されていない。このため、実行UXとして動作結果の評価や次のアクションへの遷移が曖昧になっている。",
+    "proposed_fix": "## 2. Task Execution Workflow (実行手順)\n本スクリプトの実行および検証は、オペレーターまたは自動化エージェントが以下の手順に従ってステップバイステップで実施すること。\n\n### 2.1 事前準備\n1. 監査対象 of ファイルパスリストが格納された JSON ファイル（例: `target_files.json`）を作成し、プロジェクトのルートディレクトリに配置する。\n   - 記述例: `[\"/path/to/file1.py\", \"/path/to/file2.py\"]`\n2. 欠陥データ `$APP_DATA_DIR/scratch/defects.jsonl` が存在し、読み取り可能であることを確認する。\n\n### 2.2 実行フェーズ\n3. 以下のコマンドを実行して、定理の検証スクリプトを起動する。\n   ```bash\n   uv run verify_theorems.py --targets target_files.json --defects $APP_DATA_DIR/scratch/defects.jsonl --output $APP_DATA_DIR/scratch/theorem_verification_results.md --output-json $APP_DATA_DIR/scratch/theorem_verification_results.json\n   ```\n\n### 2.3 検証および後処理フェーズ\n4. 終了コードを確認する。\n   - 終了コード `0`: 検証が正常終了。手順5へ進む（定理の合否はレポート内の判定で確認）。\n   - 終了コード `1`: 起動エラー、または I/O エラーによる異常終了。「3. 動作安全性」の Stop Rule に従いリカバリーを実行。\n   - 終了コード `2`: 無効データ率が 5% を超えたための異常終了。入力データ（defects.jsonl）のフォーマットを修正して再実行。\n   - 終了コード `3`: 再帰呼び出し制限超過。呼び出し元パイプラインのループ構造を確認・修正。\n5. 標準出力に出力された `structlog` の構造化ログ（`phase` が `\"setup\"`, `\"mapping\"`, `\"statistics\"`, `\"reporting\"` の順に遷移していること）を確認する。\n6. 出力されたレポートファイル（`theorem_verification_results.md` および `theorem_verification_results.json`）が存在し、中身が正しく書き込まれていることを確認する。\n   - JSON レポート内の `hitl_required` が `true` の場合、オペレーターが手動で結果をレビューする（HITL確認フローへ移行）。"
+  },
+  {
+    "target": "/Users/ryota/.gemini/antigravity/scratch/verify_theorems_spec_v5.md",
+    "layer": "L5",
+    "critic_name": "User Experience Critic",
+    "severity": "中",
+    "pattern_class": "missing_golden_rule",
+    "location": "## 3. 動作安全性 (Safety Rules) - Golden Rule (52行目)",
+    "title": "環境変数未定義時およびバックアップファイル重複時のデフォルト動作 (Golden Rule) の定義欠如",
+    "issue": "環境変数 `APP_DATA_DIR` が設定されていない（未定義）の場合のデフォルトの挙動（カレントディレクトリをフォールバック先にする等）が明文化されていない。また、出力ファイルのバックアップを作成する際、すでにバックアップファイルが存在する場合の挙動（無条件で上書きするのか、世代管理するのか等）のデフォルト動作が定義されておらず、実行時の競合やデータ喪失の懸念がある。",
+    "proposed_fix": "## 3. 動作安全性 (Safety Rules) 内の Golden Rule (デフォルト動作) に以下を追加する：\n- **環境変数フォールバックの Golden Rule**: 環境変数 `APP_DATA_DIR` が設定されていない場合は、デフォルトでカレントディレクトリ（`.`）をベースパスとして動的に解決し、処理を続行すること (MUST)。\n- **バックアップ競合時の Golden Rule**: バックアップファイル（例: `theorem_verification_results.md.bak`）が既に存在する場合は、無条件で古いバックアップを上書きして最新のバックアップを作成すること (MUST)。これにより、ディスク容量の圧迫を防ぎ、非対話的な実行を維持する。"
+  },
+  {
+    "target": "/Users/ryota/.gemini/antigravity/scratch/verify_theorems_spec_v5.md",
+    "layer": "L5",
+    "critic_name": "User Experience Critic",
+    "severity": "中",
+    "pattern_class": "missing_stop_rule",
+    "location": "## 3. 動作安全性 (Safety Rules) - Stop Rule (53行目)",
+    "title": "一時的エラーの定義曖昧性および異常停止時のリカバリーUX情報の欠如",
+    "issue": "Stop Rule（異常停止条件）において、「一時的な I/O エラー」に対する自動リトライが規定されているが、具体的にどのエラー（例外）を対象とするのかが明記されておらず、実装に依存する。また、スクリプトが異常終了した際、オペレーターや呼び出し元エージェントが迅速に復旧できるよう、ログに含めるべき具体的なリカバリーアクション（例: パーミッション確認やロック解除方法の提示）に関するUX指針が不足している。",
+    "proposed_fix": "- **Stop Rule (異常停止条件)**: ファイルの読み込みまたは書き込みにおいて、回復不能な I/O エラー（例: `FileNotFoundError` やディスクフルによる `OSError`）が発生した場合、または一時的な I/O エラー（例: `BlockingIOError` やファイル一時ロック）に対して最大 3 回の自動リトライ（1秒間隔）を実行しても解決しない場合は、実行を即座に停止し、`structlog` でエラーのスタックトレースと診断コンテキスト情報（ファイルパス、行番号、パースエラーとなった生データ等）および **想定される原因と推奨されるリカバリーアクション（例: 「出力先ディレクトリの書き込み権限の確認」「他プロセスによるファイルロックの解除」）** を `ERROR` または `CRITICAL` レベルで出力した上で、終了コード `1` で異常終了すること (MUST)。"
+  }
+]

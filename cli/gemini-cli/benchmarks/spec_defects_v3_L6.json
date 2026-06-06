@@ -1,0 +1,24 @@
+[
+  {
+    "target": "/Users/ryota/.gemini/antigravity/scratch/verify_theorems_spec_v3.md",
+    "layer": "L6",
+    "critic_name": "State Memory Critic",
+    "severity": "中",
+    "pattern_class": "missing_checkpoint_recovery",
+    "location": "3. 動作安全性 (Safety Rules) (L25-27)",
+    "title": "クラッシュ・エラー終了時のチェックポイントおよび再開要件の欠如",
+    "issue": "仕様書には、I/Oエラーやデータ異常により即時異常終了した際の中間状態の保存（チェックポイント）や、再開（リカバリ）に関する要件が定義されていません。大規模な欠陥データを処理する場合、異常終了後に最初から再実行を行う必要があり、非効率となります。",
+    "proposed_fix": "## 3. 動作安全性 (Safety Rules) に以下を追記する：\n- **チェックポイントと再開 (Checkpointing)**: 処理の進捗状況（最後に読み込んだ defects.jsonl の行番号等）を定期的に一時ファイル（例: `.verify_theorems_checkpoint`）に永続化し、スクリプト再起動時にチェックポイントファイルが存在する場合はその中断行から処理を再開できるようにすること (SHOULD)。"
+  },
+  {
+    "target": "/Users/ryota/.gemini/antigravity/scratch/verify_theorems_spec_v3.md",
+    "layer": "L6",
+    "critic_name": "State Memory Critic",
+    "severity": "中",
+    "pattern_class": "memory_limit_and_buffering",
+    "location": "1. 動作要件 (Functional Requirements) - データ入力 (L7)",
+    "title": "大量データ読み込み時のメモリ保持制限の未定義",
+    "issue": "defects.jsonl は「1行ずつ読み込む」とされていますが、パースした結果（ファイルごとのマッピング情報など）をどのようにメモリに保持するか、およびメモリ使用量の上限や不要データのコンパクション（メモリ解放）に関する規定がありません。データサイズがスケールした際にメモリ枯渇を引き起こすリスクがあります。",
+    "proposed_fix": "## 1. 動作要件 (Functional Requirements) の「データ入力」箇所に以下を追記する：\n- **メモリフットプリント制限**: パース後の詳細なオブジェクトをすべてメモリ上に保持することは避け、集計用の最小限のメトリクス（ファイルIDごとの pattern_class カウントおよび深刻度比率）のみを状態変数としてメモリに保持すること (MUST)。"
+  }
+]

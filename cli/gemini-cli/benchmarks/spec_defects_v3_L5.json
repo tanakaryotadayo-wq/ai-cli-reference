@@ -1,0 +1,35 @@
+[
+  {
+    "target": "/Users/ryota/.gemini/antigravity/scratch/verify_theorems_spec_v3.md",
+    "layer": "L5",
+    "critic_name": "User Experience Critic",
+    "severity": "中",
+    "pattern_class": "ambiguous_workflow",
+    "location": "## 2. Task Execution Workflow (実行手順) の手順1",
+    "title": "コマンドライン実行仕様および引数の優先順位の定義不足",
+    "issue": "スクリプトの実行方法（実行コマンドや引数の優先順位、オプション指定方法）が定義されていません。特に手順1の「外部の設定ファイルから読み込むか、引数として指定可能とし、フォールバックとして内部定数を許容する」という記述は、実装時にどのように優先順位を制御すべきか（引数 > 外部ファイル > 内部定数）が曖昧であり、実行UXとしてユーザーや自動化ツールが直感的に操作・制御できない可能性があります。",
+    "proposed_fix": "手順1を以下のように修正・具体化する：\n「1. 監査対象の全88ファイルのパスリストを以下の優先順位で取得・パースする (MUST)：\n   1) コマンドライン引数 `--targets` で指定された JSON ファイルパス\n   2) カレントディレクトリの `target_files.json` (存在する場合)\n   3) スクリプト内部に定義されたデフォルトの定数リスト\n   コマンドライン引数として `--defects` (デフォルト: `/Users/ryota/.gemini/antigravity/scratch/defects.jsonl`) および `--output` (デフォルト: `/Users/ryota/.gemini/antigravity/scratch/theorem_verification_results.md`) を受け付ける設計とする。」"
+  },
+  {
+    "target": "/Users/ryota/.gemini/antigravity/scratch/verify_theorems_spec_v3.md",
+    "layer": "L5",
+    "critic_name": "User Experience Critic",
+    "severity": "中",
+    "pattern_class": "missing_log_format",
+    "location": "## 2. Task Execution Workflow (実行手順) の進捗表示および ## 3. 動作安全性 (Safety Rules)",
+    "title": "構造化ログ（structlog）の使用および出力形式の未定義",
+    "issue": "ユーザーグローバルルールにおいて「ログ: structlogを使用すること (MUST)」が定められているにもかかわらず、仕様書の進捗表示やエラーログの出力において、structlog の構造化された出力形式（JSON形式など）や必要なキー名（event, timestamp, level, phase など）が規定されていません。これにより、実行時のログ解析UXが損なわれます。",
+    "proposed_fix": "## 2. Task Execution Workflow (実行手順) の「進捗表示」を以下に差し替える：\n「- **進捗表示**: 各処理フェーズ（データ読み込み開始、定理ごとの検証完了、レポート出力完了）において、`structlog` を用いて構造化ログ（JSON形式）を標準出力に出力すること (MUST)。ログには `event`、`timestamp`、`phase` のキーを含めること。」\nまた、## 3. 動作安全性 (Safety Rules) の Golden Rule および Stop Rule におけるログ出力に「`structlog` を使用し」を追加する。"
+  },
+  {
+    "target": "/Users/ryota/.gemini/antigravity/scratch/verify_theorems_spec_v3.md",
+    "layer": "L5",
+    "critic_name": "User Experience Critic",
+    "severity": "高",
+    "pattern_class": "missing_exit_code",
+    "location": "## 3. 動作安全性 (Safety Rules) の Golden Rule および Stop Rule",
+    "title": "異常終了時の終了コード（Exit Code）の未定義",
+    "issue": "Golden Rule および Stop Rule において、「処理を即座に中断（異常終了）すること」と規定されていますが、異常終了時の終了コード（Exit Code）が明記されていません。CIや親エージェント等の呼び出し元プロセスがスクリプトの異常終了を正確に検知するためには、終了コードを明確に規定する（例: I/Oエラーは 1、データ不整合は 2 など）必要があります。",
+    "proposed_fix": "Golden Rule および Stop Rule を以下のように修正する：\n「- **Golden Rule (デフォルト動作)**: データパース時やファイル構築時に予期しない形式 of データ（例: targetパスの欠損やスキーマ不整合）を発見した場合、独自の仮定で処理を継続せず、`structlog` で標準エラー出力にエラーログを出力した上で、終了コード `2` で処理を即座に中断（異常終了）すること (MUST)。」\n「- **Stop Rule (異常停止条件)**: ファイルの読み込みまたは書き込みにおいて、1回でも I/O エラーが発生した場合は、スクリプトの実行を即座に停止し、`structlog` でエラーログとスタックトレースを出力した上で、終了コード `1` で異常終了すること (MUST)。」"
+  }
+]

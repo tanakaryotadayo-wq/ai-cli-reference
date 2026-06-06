@@ -1,0 +1,50 @@
+[
+  {
+    "target": "/Users/ryota/.gemini/antigravity/scratch/verify_theorems_spec_v7.md",
+    "layer": "L7",
+    "critic_name": "Tool API Critic",
+    "severity": "高",
+    "pattern_class": "unrecoverable_io_retry",
+    "location": "3. 動作安全性 (Safety Rules) - Stop Rule (110-112行目)",
+    "title": "回復不能なI/Oエラーに対する無駄な指数バックオフ・リトライ設計",
+    "criticism": "【必須】仕様書において PermissionError や FileNotFoundError といった「回復不能なI/Oエラー」に対しても、一時的エラーと同様にジッターを伴う指数バックオフを用いた最大5回のリトライループを実行する設計になっています。しかし、これらのエラーはファイルが存在しないか権限がないことが原因であり、時間経過によって自律的に解決されることはありません。このような回復不能な例外に対して無駄にリトライを繰り返すことは、CPUリソースを無駄に消費し、実行時間を不必要に延ばし、エラー報告や異常終了のレスポンスを遅延させるため設計上の欠陥です。",
+    "improvement": "【必須】リトライ処理のトラップ対象を BlockingIOError や TimeoutError などの一時的なI/O例外に限定し、FileNotFoundError や PermissionError などの回復不能なエラーが検知された場合は、リトライを一切行わず即座に適切な例外ハンドリングと構造化ログの出力を行い、終了コード 1 で異常終了するように仕様を修正する必要があります。",
+    "proposed_fix": "【必須】110〜112行目を以下のように差し替える：\n- **Stop Rule (異常停止条件と指数バックオフ)**: \n  - ファイルの読み込みまたは書き込みにおいて、一時的な I/O エラー（BlockingIOError, TimeoutError）が発生した場合は、ジッターを伴う指数バックオフ（初期待ち時間 0.5 秒、乗数 2、最大待ち時間 5 秒、最大リトライ回数 5 回）を適用したリトライループを実装すること (MUST)。\n  - 回復不能な I/O エラー（PermissionError, FileNotFoundError など）、またはリトライ回数を超過した場合は、即時に実行を停止し、structlog で例外情報（exc_info=True を指定し、適切にフォーマットされたスタックトレース）と、マスク処理済みの詳細な診断コンテキスト情報（エラーが発生したファイルパス、実行中のアトミックシーケンスフェーズ、処理中行番号、リトライ試行回数等）を ERROR または CRITICAL レベルで出力した上で、終了コード 1 で異常終了すること (MUST)。"
+  },
+  {
+    "target": "/Users/ryota/.gemini/antigravity/scratch/verify_theorems_spec_v7.md",
+    "layer": "L7",
+    "critic_name": "Tool API Critic",
+    "severity": "高",
+    "pattern_class": "hitl_missing_context",
+    "location": "1. 動作要件 (Functional Requirements) - JSONメタデータ出力およびHITL警告 (49-52行目)",
+    "title": "HITL連携におけるコンテキスト識別引数の欠落によるシグナリング統合の破綻",
+    "criticism": "【必須】仕様書では hitl_required=True の場合に structlog にて event='HITL_PENDING_APPROVAL' 構造化ログを出力し、SlackやGitHub PR等の外部システムに承認依頼を自動通知する統合要件を定めています。しかし、スクリプトの引数仕様に「どのプルリクエストに対する実行か」「どのワークフローの実行IDか」などの実行コンテキスト（識別子）を渡すための引数が定義されていません。このコンテキストがないと、通知を受けたオペレータや後続パイプライン側でどの処理を承認すべきかを照合・特定することができなくなり、Human-in-the-loop の通知・承認フローが実質的に破綻します。",
+    "improvement": "【必須】スクリプトの引数に実行コンテキストを渡すためのパラメータ（例: --workflow-context）を追加し、それを hitl_required=True の際に出力される構造化ログおよびJSONメタデータのプロパティに含めて外部へ通知できるように仕様を拡張します。",
+    "proposed_fix": "【必須】50行目および52行目を以下のように修正する：\n- **JSONメタデータ出力**: 後続のAIエージェントや検証パイプラインが自己反映（Self-Reflection）および自動修復のアクションを実行できるよう、検証結果の詳細（各定理の判定、メトリクス数値、反例ファイルリスト、criticism、improvement、および hitl_required (Boolean型)、およびコマンドライン引数 --workflow-context で指定された任意の文字列）を含む構造化された JSON ファイルを、コマンドライン引数 --output-json で指定されたパス（デフォルト: $APP_DATA_DIR/scratch/theorem_verification_results.json）に書き出すこと (MUST)。\n- hitl_required が true の場合は、structlog にて event='HITL_PENDING_APPROVAL' という一意のイベント名を持つ構造化ログを出力し、そのログ内に workflow_context も含め、後続のパイプラインやCI/CD環境がそのログイベントをキャッチして Slack や GitHub PR 等に承認依頼を自動通知できるようにシグナリング仕様を統合すること (MUST)。"
+  },
+  {
+    "target": "/Users/ryota/.gemini/antigravity/scratch/verify_theorems_spec_v7.md",
+    "layer": "L7",
+    "critic_name": "Tool API Critic",
+    "severity": "中",
+    "pattern_class": "redundant_api_rate_limit",
+    "location": "3. 動作安全性 (Safety Rules) - Stop Rule (112行目)",
+    "title": "外部APIレート制限(429)対策とローカルファイル処理の仕様的矛盾",
+    "criticism": "【必須】仕様書112行目に「429 レート制限などで即時にフォールバックが必要な場合」という記述がありますが、本スクリプト（verify_theorems.py）はローカルファイル（defects.jsonl）のパースとレポート生成を目的とするオフライン集計スクリプトであり、外部のWeb API接続やレート制限が生じる処理は一切想定されていません。外部API呼び出しの具体的な仕様（対象API、通信方法、認証など）がないにもかかわらず「429レート制限」という文言が存在することは、実装者に不要な通信例外処理の設計やモック実装を強いることになり、コードの複雑性を無駄に増大させます。",
+    "improvement": "【必須】外部通信を行わないローカル専用スクリプトであることを明確にし、112行目の「429 レート制限などで即時にフォールバックが必要な場合」という不要な文言を削除して、ローカル処理中の回復不能エラーやリトライ超過時のハンドリングに限定した仕様に建立する必要があります。",
+    "proposed_fix": "【必須】112行目の該当部分を以下のように修正する：\n- 「リトライ回数を超過した場合、または回復不能なエラーを検知して即時にフォールバックが必要な場合は、実行を即座に停止し、...」"
+  },
+  {
+    "target": "/Users/ryota/.gemini/antigravity/scratch/verify_theorems_spec_v7.md",
+    "layer": "L7",
+    "critic_name": "Tool API Critic",
+    "severity": "中",
+    "pattern_class": "missing_parameter_validation",
+    "location": "1. 動作要件 (Functional Requirements) - データ入力およびパスの動的解決 (14-15行目, 120-124行目)",
+    "title": "コマンドライン引数および入力ファイルのバリデーション仕様の欠落",
+    "criticism": "【必須】仕様書では defects.jsonl の行サイズ制限（10MB）やディレクトリトラバーサル対策は定義されていますが、起動時に指定されるコマンドライン引数の整合性チェックや、入力される json ファイル（target_files.json）自体の構造に対するバリデーション要件が定義されていません。--targets に指定された JSON ファイルが破損している場合や、配列ではなく無効なデータ型であった場合、あるいは必要な引数が欠落していた場合の挙動が未定義であるため、起動時に適切なエラーハンドリングが行われず、途中のフェーズ（mapping など）で予期せぬ実行時例外が発生してクラッシュする危険性があります。",
+    "improvement": "【必須】起動時（setup フェーズ）において、すべてのコマンドライン引数の存在確認、および target_files.json をパースした際の配列構造チェックを行い、整合性に欠ける場合は即座に構造化ログにエラーを記録して終了コード 1 で異常終了するバリデーション要件を明記します。",
+    "proposed_fix": "【必須】15行目の手前に以下の項目を追加する：\n- **入力引数と設定ファイルのバリデーション**:\n  - スクリプト起動時の `setup` フェーズにおいて、指定された `--targets` および `--defects` のパスが存在し、かつ読み取り可能な通常のファイルであることを確認すること (MUST)。\n  - `--targets` で指定された JSON ファイルをパースし、それが文字列 of リスト（ファイルパスの配列）の構造を正しく持っているかを検証すること (MUST)。JSONの構造が不正であるか、リストが空である場合は、エラー内容を構造化ログに記録し、終了コード `1` で異常終了すること (MUST)。"
+  }
+]

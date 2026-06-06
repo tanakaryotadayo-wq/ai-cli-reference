@@ -1,0 +1,46 @@
+[
+  {
+    "target": "/Users/ryota/.gemini/antigravity/scratch/verify_theorems_spec_v4.md",
+    "layer": "L4",
+    "critic_name": "Ecosystem Security Critic",
+    "severity": "高",
+    "pattern_class": "hardcoded_absolute_path_and_identity",
+    "location": "## 1. 動作要件 (Functional Requirements) (7, 20, 23行目) および ## 2. Task Execution Workflow (実行手順) (30行目)",
+    "title": "個人ユーザー名を含む絶対パスのハードコードと仕様の自己矛盾",
+    "issue": "仕様書内で『絶対パス（特に個人ユーザー名を含むもの）を直接ハードコードしないこと (MUST)』と3.動作安全性（42行目）で規定されているにもかかわらず、1.動作要件の7, 20, 23行目、および2.実行手順の30行目で `/Users/ryota/.gemini/antigravity/scratch/...` という個人ユーザー名 `ryota` を含む絶対パスがデフォルト値や入力要件として直接ハードコードされています。これは仕様自体の自己矛盾であり、マルチユーザー環境やコンテナ環境（OrbStack等）での動作時にセキュリティ上のリスク（個人情報の露出）や動作不具合（パーミッションエラー等）を引き起こします。",
+    "proposed_fix": "絶対パスの記述箇所を、環境変数 `APP_DATA_DIR` やユーザーのホームディレクトリからの相対パスで動的に解決する仕様に修正します。\n\n【差し替え案】\n7行目:\n- **データ入力**: 環境変数 `APP_DATA_DIR` またはコマンドライン引数で指定されたパス（デフォルト: `$APP_DATA_DIR/scratch/defects.jsonl`）から欠陥データ（以降 `defects`）を1行ずつ読み込み、パースすること (MUST)。\n\n20行目:\n- 検証結果のメトリクスと合格/不合格判定をまとめたレポートを、指定された出力パス（デフォルト: `$APP_DATA_DIR/scratch/theorem_verification_results.md`）に書き出すこと (MUST)。\n\n23行目:\n- 検証結果の詳細（各定理の判定、メトリクス数値、反例ファイルリストなど）を含む構造化された JSON ファイルを、指定されたパス（デフォルト: `$APP_DATA_DIR/scratch/theorem_verification_results.json`）に書き出すこと (MUST)。\n\n30行目:\nコマンドライン引数として `--defects` (デフォルト: `$APP_DATA_DIR/scratch/defects.jsonl`) および `--output` (デフォルト: `$APP_DATA_DIR/scratch/theorem_verification_results.md`) を受け付ける設計とすること (MUST)。"
+  },
+  {
+    "target": "/Users/ryota/.gemini/antigravity/scratch/verify_theorems_spec_v4.md",
+    "layer": "L4",
+    "critic_name": "Ecosystem Security Critic",
+    "severity": "致命的",
+    "pattern_class": "missing_priority_recursion_guard",
+    "location": "## 3. 動作安全性 (Safety Rules) の「再帰呼び出しガード」 (41行目)",
+    "title": "再帰呼び出しガードの評価タイミングおよび環境変数インクリメント仕様の欠落",
+    "issue": "再帰呼び出しガードにおいて、『環境変数で引き渡される実行深度（AGENT_EXECUTION_DEPTH）をチェックし、閾値を超えた場合に即座に実行を停止する』とあるのみで、このチェックがスクリプトのエントリーポイントで『最優先（他のすべての初期化、引数パース、ファイルI/O等の処理の前）』に行われるべきであるという規定が抜けています。また、起動時に環境変数 `AGENT_EXECUTION_DEPTH` をインクリメントして再設定し、後続プロセスに正しく伝播させるための仕様も記述されていません。このため、チェックが遅れて意図しないリソース浪費やI/Oが発生する危険性があり、無限再帰の防止策として不完全です。",
+    "proposed_fix": "再帰ガードの評価タイミングを最優先とし、環境変数のインクリメントロジックを明記します。\n\n【差し替え案】\n41行目:\n- **再帰呼び出しガード**: エージェント実行環境下におけるスクリプトの無限再帰呼び出しを防止するため、スクリプトの起動直後（他のいかなる初期化、引数パース、ファイルI/Oよりも前）に、環境変数 `AGENT_EXECUTION_DEPTH` をチェックすること (MUST)。環境変数が未定義の場合は `1` としてみなし、定義されている場合は現在の値をインクリメントして環境変数に再設定すること (MUST)。インクリメント後の値が閾値（5回）を超えた場合は、標準エラー出力にエラーを出力し、終了コード `3` で即座に実行を停止すること (MUST)。"
+  },
+  {
+    "target": "/Users/ryota/.gemini/antigravity/scratch/verify_theorems_spec_v4.md",
+    "layer": "L4",
+    "critic_name": "Ecosystem Security Critic",
+    "severity": "中",
+    "pattern_class": "insecure_file_write_and_race_condition",
+    "location": "## 1. 動作要件 (Functional Requirements) の「データ出力」 (20, 23行目)",
+    "title": "ファイル書き込み時におけるアトミック書き込みおよび適切なパーミッション設定の欠如",
+    "issue": "レポートや結果のJSONを出力する際、『既にファイルが存在する場合は、自動でバックアップを作成した上で上書きすること』とありますが、直接上書きを行うと書き込み中のクラッシュや競合状態（Race Condition）によって元のファイルとバックアップの双方が破損するリスクがあります。また、出力先ディレクトリの自動作成時やファイル生成時のパーミッション設定に関する安全な仕様が規定されていません。",
+    "proposed_fix": "安全な書き込み処理として、アトミックな一時ファイル書き込みとリネーム、およびディレクトリ自動作成時のパーミッション制御の仕様を追加します。\n\n【差し替え案】\n20行目末尾に追加:\nファイル出力を行う際は、競合やクラッシュによる破損を防ぐため、まず同一ディレクトリ内に一時ファイルとして書き出し、書き込み成功後にアトミックにリネーム（置換）する手法を採用すること (MUST)。また、出力先ディレクトリが存在しない場合は、適切なパーミッション（例: `0700` または `0755`）で自動作成すること (MUST)。"
+  },
+  {
+    "target": "/Users/ryota/.gemini/antigravity/scratch/verify_theorems_spec_v4.md",
+    "layer": "L4",
+    "critic_name": "Ecosystem Security Critic",
+    "severity": "中",
+    "pattern_class": "inconsistent_toolchain_specification",
+    "location": "## 4. 開発環境・ツールチェーン要件 (46行目)",
+    "title": "非推奨ツール（pip）の排除および仮想環境強制仕様の欠落",
+    "issue": "依存関係のインストールに `uv` を使用し `pip` を禁止することは記載されていますが、実行時に開発者が誤ってグローバル環境などでスクリプトを実行してしまうことを防ぐためのガード仕様（`uv run` を介した実行の推奨や、適切な仮想環境 `.venv` 外での実行を検知して警告・エラー終了する仕組み）が定義されていません。2026年推奨環境の整合性を保つための実行時チェックが必要です。",
+    "proposed_fix": "実行環境における仮想環境または `uv` によるカプセル化のチェック仕様を「動作安全性」セクションに追加します。\n\n【追加案】\n3. 動作安全性 (Safety Rules) に以下を追加:\n- **実行環境ガード**: スクリプトの実行は、`uv run` またはアクティベートされた仮想環境（`.venv`）内で行われていることをチェックすること (SHOULD)。グローバルな Python 環境で直接実行されたことを検知した場合は、`structlog` で警告を出力し、オペレータに `uv` の使用を促すこと。"
+  }
+]

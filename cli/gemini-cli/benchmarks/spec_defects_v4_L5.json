@@ -1,0 +1,57 @@
+[
+  {
+    "target": "/Users/ryota/.gemini/antigravity/scratch/verify_theorems_spec_v4.md",
+    "layer": "L5",
+    "critic_name": "User Experience Critic",
+    "severity": "高",
+    "pattern_class": "missing_execution_workflow",
+    "location": "## 2. Task Execution Workflow (実行手順) (25-35行目)",
+    "title": "オペレーション手順および確認フローを伴う具体的な実行ワークフローの欠如",
+    "issue": "記述されているのはスクリプト内部のロジック実行手順のみであり、オペレータやAIエージェントが実際にタスクを開始し、入力データを準備し、スクリプトを実行して結果を確認し、例外や不合格時にどのような手順（リカバリー、再実行、人手介入）をとるべきかという「具体的な作業手順（ワークフロー）」としての記述が欠落しています。",
+    "proposed_fix": "「## 2. Task Execution Workflow (実行手順)」に、具体的なオペレーションフローを追加する。\n例：\n### オペレーター/エージェント作業ワークフロー\n1. **事前準備**:\n   - 監査対象のパスリストが記述された JSON ファイル（例: `target_files.json`）を作成し、所定のディレクトリに配置する。\n   - 欠陥データ `/Users/ryota/.gemini/antigravity/scratch/defects.jsonl` が存在し、読み取り可能であることを確認する。\n2. **実行フェーズ**:\n   - 以下のコマンドを実行する。\n     `uv run verify_theorems.py --targets target_files.json --defects /Users/ryota/.gemini/antigravity/scratch/defects.jsonl --output /Users/ryota/.gemini/antigravity/scratch/theorem_verification_results.md`\n3. **進行状況の監視**:\n   - 標準出力に出力される JSON 形式 of 進捗ログ（`structlog`）を監視し、エラーが発生していないことを確認する。\n4. **結果確認フェーズ**:\n   - 出力されたマークダウンレポート（`/Users/ryota/.gemini/antigravity/scratch/theorem_verification_results.md`）および JSON 構造化データ（`theorem_verification_results.json`）の内容を確認する。\n   - 標準出力に警告ログ（HITL確認要求）が出力された場合は、手順5に進む。\n5. **例外およびHITL確認対応**:\n   - 警告ログが検出された場合、オペレータは `theorem_verification_results.json` に含まれる「反例ファイルリスト」を手動で確認し、定理の不整合の原因を特定・修正する。"
+  },
+  {
+    "target": "/Users/ryota/.gemini/antigravity/scratch/verify_theorems_spec_v4.md",
+    "layer": "L5",
+    "critic_name": "User Experience Critic",
+    "severity": "中",
+    "pattern_class": "missing_golden_rule",
+    "location": "## 1. 動作要件 (Functional Requirements) (9-18行目)",
+    "title": "定理が不合格判定となった場合の実行終了ステータスと通知動作の未定義",
+    "issue": "いずれかの定理が検証基準を満たさず「不合格」と判定された場合の、スクリプトの終了コードや通知等のデフォルト動作（Golden Rule）が定義されていません。これにより、自動化されたワークフローや呼び出し元エージェントが、ロジック上の「検証不合格」をシステムエラーと区別して処理できず、UX上の混乱を招く原因となります。",
+    "proposed_fix": "「## 1. 動作要件 (Functional Requirements)」の「定理の統計的検証」の末尾、または「## 3. 動作安全性 (Safety Rules)」の「Golden Rule」に以下を追加する。\n`- 定理の検証結果が「不合格」となった場合でも、スクリプト自体の処理が正常に完了した場合は、終了コード `0` で正常終了すること (MUST)。検証の合否は出力されるマークダウンおよび JSON レポート内の判定フィールドで表現し、終了コードをもって検証の成否（合格・不合格）を表してはならない (MUST NOT)。これにより、システムエラー（終了コード1,2,3）とビジネスロジック上の検証不合格を明確に区別する。`"
+  },
+  {
+    "target": "/Users/ryota/.gemini/antigravity/scratch/verify_theorems_spec_v4.md",
+    "layer": "L5",
+    "critic_name": "User Experience Critic",
+    "severity": "中",
+    "pattern_class": "missing_specification",
+    "location": "## 2. Task Execution Workflow (実行手順) (35行目)",
+    "title": "進捗ログのフェーズ名（phase）の定義欠如によるUI/UX表示の困難",
+    "issue": "進捗フィードバックにおいて、`structlog` の `phase` キーに含めるべき具体的な文字列（フェーズ定義）が仕様書に定義されていません。このため、ログをパースして進行度をユーザーに見せるようなUI/UX（プログレスバー等）の統合が困難になり、実装者ごとに異なるフェーズ名が使われるリスクがあります。",
+    "proposed_fix": "「## 2. Task Execution Workflow (実行手順)」の「進捗フィードバックとトレース」の記述を以下のように修正・具体化する。\n`ログには event、timestamp、phase のキーを含めること。phase の値は、処理状態に応じて次の文字列を正確に使用すること (MUST): \"setup\"（設定・入力読み込み）、\"mapping\"（欠陥データマッピング）、\"statistics\"（統計計算）、\"reporting\"（レポート出力）。`"
+  },
+  {
+    "target": "/Users/ryota/.gemini/antigravity/scratch/verify_theorems_spec_v4.md",
+    "layer": "L5",
+    "critic_name": "User Experience Critic",
+    "severity": "高",
+    "pattern_class": "missing_stop_rule",
+    "location": "## 3. 動作安全性 (Safety Rules) (43行目)",
+    "title": "チェックポイント破損・不整合時の復旧デフォルト動作 (Golden Rule) と停止基準 (Stop Rule) の未定義",
+    "issue": "チェックポイントと再開（Checkpointing）機能において、チェックポイントファイルが破損している場合や、入力となる `defects.jsonl` の行数や内容が前回実行時から変更されており不整合が生じている場合の、デフォルトの復旧動作（Golden Rule）や、処理を停止してエラーとする基準（Stop Rule）が記述されていません。再開時のUXにおいて、誤ったデータパースによる集計バグや無限ループの発生、あるいは不要なハングアップを招く危険性があります。",
+    "proposed_fix": "「## 3. 動作安全性 (Safety Rules)」の「チェックポイントと再開」に以下を追加する。\n`- チェックポイントファイルが破損しているか、または defects.jsonl のサイズや最終更新日時がチェックポイントに記録されたメタデータと一致しない（データ不整合）場合は、チェックポイントファイルを無視して最初（1行目）から処理をやり直すこと (Golden Rule)。ただし、やり直した際にも同一のパースエラーが連続して3回発生した場合は、チェックポイントファイルを削除した上で、終了コード 1 で異常終了すること (Stop Rule)。`"
+  },
+  {
+    "target": "/Users/ryota/.gemini/antigravity/scratch/verify_theorems_spec_v4.md",
+    "layer": "L5",
+    "critic_name": "User Experience Critic",
+    "severity": "中",
+    "pattern_class": "missing_golden_rule",
+    "location": "## 1. 動作要件 (Functional Requirements) (22行目)",
+    "title": "HITL（警告ログ）発生時の非対話環境における動作ポリシー（Golden Rule / Stop Rule）の未定義",
+    "issue": "「オペレータに確認を促す警告ログを出力すること」とありますが、自動実行環境（CIやヘッドレスエージェント環境）などの非対話的な実行UXにおいて、確認のために処理を一時停止（プロンプト待機）させるのか、それとも非同期にログを出力して処理は即時続行させるのかのデフォルト動作（Golden Rule）が明記されていません。対話的待機を行う場合にタイムアウトや停止の基準（Stop Rule）もないため、プロセスがハングアップしたままになるリスクがあります。",
+    "proposed_fix": "「## 1. 動作要件 (Functional Requirements)」の「データ出力」における警告ログの仕様に以下を追加する。\n`- スクリプトの実行は常に非対話的（Non-blocking）に行うものとし、警告ログを出力した後にオペレータの入力を待って一時停止してはならない (MUST NOT)。警告は標準出力/標準エラーへの出力および JSON/マークダウンレポートへの記録のみにとどめ、実行自体は完了させること (Golden Rule)。これにより、自動化パイプラインのハングアップを防止する。`"
+  }
+]

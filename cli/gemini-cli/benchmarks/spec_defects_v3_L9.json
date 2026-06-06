@@ -1,0 +1,24 @@
+[
+  {
+    "target": "/Users/ryota/.gemini/antigravity/scratch/verify_theorems_spec_v3.md",
+    "layer": "L9",
+    "critic_name": "Resilience Critic",
+    "severity": "高",
+    "pattern_class": "missing_graceful_degradation",
+    "location": "## 3. 動作安全性 (Safety Rules)",
+    "title": "データパースエラーおよび一時的なI/Oエラーに対する縮退運転規定の欠如",
+    "issue": "現在の仕様では、defects.jsonl のパース時に1行でもスキーマ不整合や予期しないデータ形式があった場合、あるいはファイル読み書きで1度でもI/Oエラーが発生した場合に即座に異常終了（クラッシュ）する設計となっています。これは大規模なデータ検証自動化ループにおいて極めて脆弱であり、ネットワーク越しや外部ストレージとの一時的な疎通エラー、少数の不正データによるパイプライン全体の停止を招きます。部分故障時にエラーを記録して処理を継続する「縮退運転（Graceful Degradation）」や、エラー発生率の閾値判定による安全なフォールバック設計が不足しています。",
+    "proposed_fix": "- **Golden Rule (デフォルト動作)**: データパース時やファイル構築時に予期しない形式のデータ（例: targetパスの欠損やスキーマ不整合）を発見した場合、その行を警告として記録した上でスキップし、残りのデータのパース処理を継続すること (MUST)。スキップしたエラー件数と内容は最終レポートに「無効データ（Skipped Defects）」として出力すること (MUST)。ただし、無効データの割合が読み込み総件数の 5% を超えた場合は、データの健全性が損なわれていると判断し、処理を即座に中断（異常終了）すること (MUST)。\n- **Stop Rule (異常停止条件)**: ファイルの読み込みまたは書き込みにおいて I/O エラーが発生した場合、即座に終了せず、指数バックオフ等を用いて最大3回までリトライを試みること (MUST)。リトライ後もエラーが解消しない場合に限り、実行を即座に停止し、エラーログとスタックトレースを出力して異常終了すること (MUST)。"
+  },
+  {
+    "target": "/Users/ryota/.gemini/antigravity/scratch/verify_theorems_spec_v3.md",
+    "layer": "L9",
+    "critic_name": "Resilience Critic",
+    "severity": "中",
+    "pattern_class": "missing_feedback_loop_interface",
+    "location": "## 1. 動作要件 (Functional Requirements) - データ出力",
+    "title": "自動化ループ向けの機械可読な検証結果フィードバック仕様の欠如",
+    "issue": "検証結果の出力が `/Users/ryota/.gemini/antigravity/scratch/theorem_verification_results.md` というマークダウン形式のレポートに限定されています。このスクリプトがエージェントの自己反映軌道（Self-Reflective Feedback）や自動検証ループの一部として組み込まれる際、マークダウンのパースは機械処理において不安定な要因となります。検証結果（合格/不合格、各メトリクス数値、反例となったファイルリスト）を機械的に処理し、後続の修正エージェントに構造化データとしてフィードバックするためのJSONレポートの同時出力仕様が定義されていません。",
+    "proposed_fix": "- **データ出力**:\n  - 検証結果のメトリクスと合格/不合格判定をまとめたレポートを `/Users/ryota/.gemini/antigravity/scratch/theorem_verification_results.md` に書き出すこと (MUST)。\n  - 同時に、後続 of AIエージェントや検証パイプラインが自己反映（Self-Reflection）および自動修復のアクションを実行できるよう、検証結果の詳細（各定理の判定、メトリクス数値、反例ファイルリストなど）を含む構造化された JSON ファイルを `/Users/ryota/.gemini/antigravity/scratch/theorem_verification_results.json` に出力すること (MUST)。"
+  }
+]

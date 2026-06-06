@@ -1,0 +1,46 @@
+[
+  {
+    "target": "/Users/ryota/.gemini/antigravity/scratch/verify_theorems_spec_v4.md",
+    "layer": "L8",
+    "critic_name": "Observability Critic",
+    "severity": "中",
+    "pattern_class": "insufficient_progress_feedback",
+    "location": "## 2. Task Execution Workflow (実行手順) 35行目",
+    "title": "進捗フィードバックにおける現在値・総数の不足およびデバッグログ有効化オプションの未定義",
+    "issue": "進捗ログに event, timestamp, phase しか定義されておらず、大量のデータをバッチ処理する際の「現在何件目/総数何件」という進捗率（progress）を示すメトリクスが不足している。また、DEBUGレベルのログを出力可能とするための、コマンドライン引数（--debug）や環境変数によるログレベル制御の仕様が明記されていないため、運用・デバッグ時の可観測性が低下する。",
+    "proposed_fix": "- **進捗フィードバックとトレース**: 各処理フェーズ（設定ファイルおよび欠陥データの読み込み開始、定理ごとの検証完了、レポート出力完了）において、`structlog` を用いた進捗ログ（JSON形式）を標準出力に出力すること (MUST)。ログには `event`、`timestamp`、`phase` に加え、現在の処理件数 `processed_count` と総件数 `total_count` を含めること (MUST)。また、コマンドライン引数 `--debug` または環境変数 `LOG_LEVEL=DEBUG` が指定された場合に、対象ファイルの処理ごと、または異常レコード検出時の詳細な実行ステップを `DEBUG` レベル of ログとして出力できる設計とすること (MUST)。"
+  },
+  {
+    "target": "/Users/ryota/.gemini/antigravity/scratch/verify_theorems_spec_v4.md",
+    "layer": "L8",
+    "critic_name": "Observability Critic",
+    "severity": "中",
+    "pattern_class": "ambiguous_log_stream_and_context",
+    "location": "## 1. 動作要件 22行目 および ## 3. 動作安全性 38-39行目",
+    "title": "警告・エラーログの出力先（stdout/stderr）の混在とコンテキスト要件の曖昧さ",
+    "issue": "35行目で「structlogを進捗ログとして標準出力に出力する」とある一方で、22行目の「標準出力でもオペレータに確認を促す警告ログ」、39行目の「structlogで標準エラー出力にエラーログを出力」とあり、出力ストリームの振り分けルールが整理されていない。また、警告ログ（HITL確認要求）に含めるべき構造化データ（定理名、現在の計算値など）の規定がなく、ログの構造化メリットが活かせない。",
+    "proposed_fix": "- **ログ出力ストリームの分類**: 通常の進捗ログおよび正常終了ログは標準出力（stdout）に、警告（WARNING）、エラー（ERROR）、致命的エラー（CRITICAL）のログは標準エラー出力（stderr）に、すべて `structlog` を用いて JSON 形式で出力すること (MUST)。\n- **警告ログの構造化**: 分母0によるHITL確認要求時の警告ログには、`event: \"hitl_confirmation_required\"`, `theorem_name`, `metrics` などの構造化キーを含めること (MUST)。"
+  },
+  {
+    "target": "/Users/ryota/.gemini/antigravity/scratch/verify_theorems_spec_v4.md",
+    "layer": "L8",
+    "critic_name": "Observability Critic",
+    "severity": "高",
+    "pattern_class": "logical_inconsistency_in_log_context",
+    "location": "## 3. 動作安全性 (Safety Rules) 40行目",
+    "title": "I/Oエラー時における診断コンテキスト（行番号・生データ）の論理的不整合",
+    "issue": "物理的なI/Oエラー（ファイルオープン失敗、ディスクフル等）が発生した場合、ファイルの中身を読み込めていないため、「行番号」や「パースエラーとなった生データ」を取得・出力することは不可能である。仕様書において、これらを I/O エラー時のログ出力要件（MUST）としている点は、実行時の例外処理設計と矛盾している。",
+    "proposed_fix": "- **Stop Rule (異常停止条件)**: ファイルの読み込みまたは書き込みにおいて、回復不能な I/O エラーが発生した場合、または一時的な I/O エラーに対して最大 3 回の自動リトライを行っても解決しない場合は、実行を即座に停止し、`structlog` でエラーのスタックトレースと診断コンテキスト情報（ファイルパス、エラー原因等）を `ERROR` または `CRITICAL` レベルで出力した上で、終了コード `1` で異常終了すること (MUST)。データのパースエラー（形式不整合）による警告/エラー時には、該当する行番号およびパースエラーとなった生データをコンテキストに含めること (MUST)。"
+  },
+  {
+    "target": "/Users/ryota/.gemini/antigravity/scratch/verify_theorems_spec_v4.md",
+    "layer": "L8",
+    "critic_name": "Observability Critic",
+    "severity": "中",
+    "pattern_class": "missing_checkpoint_observability",
+    "location": "## 3. 動作安全性 (Safety Rules) 43行目",
+    "title": "チェックポイント再開・作成時における構造化ログ要件の欠落",
+    "issue": "処理を途中のチェックポイントから再開（Resume）する機能（SHOULD）が定義されているが、再開時、チェックポイント作成（永続化）時、またはチェックポイントファイルの破損等の異常時におけるログ出力の規定がない。これにより、スクリプトが本当にチェックポイントから再開されたのか、最初から実行されているのかを外部から監視・追跡できない。",
+    "proposed_fix": "- **チェックポイントの可観測性**: チェックポイントファイルからの再開時には `event: \"checkpoint_resume\"`, `resume_line` などを、作成時には `event: \"checkpoint_save\"`, `saved_line` などを、破損や無効化による最初からの実行時には `event: \"checkpoint_corrupted\"`, `reason` などを、それぞれ `structlog` を用いて出力すること (MUST)。"
+  }
+]
