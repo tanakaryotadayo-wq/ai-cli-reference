@@ -11,63 +11,63 @@
     L8（最小エントロピーログ）への評価値データ連携構造の定式化。プロンプトの過圧縮・過希釈バグが L9（自己修復ループ）のプログラムAST・仕様乖離の修復プロセスへフィードバックされる数理モデルの記述。
 *   **2026年技術エコシステム適合**:
     `structlog` による構造化ロギング、Google ADK (Antigravity SDK) / LangGraph の推論実行ステップにおける入力ゲートウェイ・インターセプターとしての動作設計。Inngest ワークフローイベントによる自動フック。
-*   **詳細成果物**: [new_theorem_L1.md](file:///Users/ryota/ai-cli-reference-1/cli/gemini-cli/theorems/new_theorem_L1.md)
+*   **詳細成果物**: [new_theorem_L1.md](./new_theorem_L1.md)
 
 ### [L2] 状態遷移ループフリー不動点定理 (v4.0)
 *   **他レイヤーとの数理コヒーレンス**:
     L5の多次元状態空間 $v = (s, k, \Gamma, I)$ と統合。L7のAPI縮退運転フラグ $B_{\text{L7}} \in \{0, 1\}$ を組み込んだガード付き遷移 $T_{\text{guard}}(v, e, B_{\text{L7}})$ を定式化。
 *   **2026年技術エコシステム適合**:
     `uv` 依存関係メタデータ（PEP 723）の追加、`structlog` による遷移モード・ポテンシャル変化量の構造化ログ出力、非同期環境における状態復元性を保証する Inngest ワークフロー定義、Next.js 15 Server Actions / Granian によるリアルタイム進捗可視化。
-*   **詳細成果物**: [new_theorem_L2.md](file:///Users/ryota/ai-cli-reference-1/cli/gemini-cli/theorems/new_theorem_L2.md)
+*   **詳細成果物**: [new_theorem_L2.md](./new_theorem_L2.md)
 
 ### [L3] スキル記述の直交排他定理 (v4.0)
 *   **幾何学的数理の厳密化**:
     Scipyの `betainc` に与える引数を $\sin^2\theta_c$ に修正し、補角分岐を正確に網羅。単位球面 $\mathbb{S}^{d-1}$ の正曲率（Positive Curvature）により、平坦空間よりも密な球充填が理論的に可能になる現象を幾何学的に証明。
 *   **2026年技術エコシステム適合**:
     Google ADK の `PreToolCallDecideHook` と結合し、ツール実行前に `SkillOrthogonalityCritic` を作動させてL7/L5へ動的ルーティングするガードレール実装。Granian + FastAPI によるASGIマイクロサービス化、Next.js 15 SSE連携。
-*   **詳細成果物**: [new_theorem_L3.md](file:///Users/ryota/ai-cli-reference-1/cli/gemini-cli/theorems/new_theorem_L3.md)
+*   **詳細成果物**: [new_theorem_L3.md](./new_theorem_L3.md)
 
 ### [L4] 自己免疫的サンドボックス隔離定理 (v4.0)
 *   **他レイヤーとの数理コヒーレンス**:
     L1（意味多様体の密度乖離 $\rho_P(x)$ によるインジェクション判定）、L2（有向グラフ上での動的エッジクリッピングによるループフリー保証）、L5（期待コスト上昇に伴う自動 UI-HITL 転送）、L8/L9（構造化ログと自己修復コードの例外追従）の完全同期。
 *   **2026年技術エコシステム適合**:
     `Granian` ミドルウェアとしての実行構造、`structlog` のスレッドセーフなコンテキストバインド（`logger.bind()`）、Inngest による非同期イベント駆動型の例外エスカレーションモデルの定式化、Next.js 15 Server Action 経由の監査シグナル受信。
-*   **詳細成果物**: [new_theorem_L4.md](file:///Users/ryota/ai-cli-reference-1/cli/gemini-cli/theorems/new_theorem_L4.md)
+*   **詳細成果物**: [new_theorem_L4.md](./new_theorem_L4.md)
 
 ### [L5] 有向タスクグラフ最小経路定理 (v4.0)
 *   **動的ポリシー決定の刷新**:
     ベルマン方程式に基づく期待コスト $G(v)$ の再帰的定式化。確率的遷移（環境の揺らぎや失敗率）をモデル化するため、静的経路からマルコフ決定過程（MDP）とメモ化再帰を用いた動的ポリシー決定へ刷新。
 *   **2026年技術エコシステム適合**:
     `uv` パッケージ管理、`Ruff` 静的チェック、`Granian` ASGIサーバー、`SQLModel` による永続状態管理、および `structlog` 構造化ログへの完全適合。
-*   **詳細成果物**: [new_theorem_L5.md](file:///Users/ryota/ai-cli-reference-1/cli/gemini-cli/theorems/new_theorem_L5.md)
+*   **詳細成果物**: [new_theorem_L5.md](./new_theorem_L5.md)
 
 ### [L6] 記憶容量制限下の最適忘却定理 (v4.0)
 *   **二面性表現密度ユーティリティ関数の導入**:
     L1結合を精緻化し、「過圧縮領域での指数的情報崩壊」と「過希釈領域でのノイズ混入ペナルティ」の両面を考慮した二面性表現密度ユーティリティ関数 $\phi(\mathcal{D})$ を構築。過希釈時、表現密度が $\mathcal{D}_{opt}$ に達するまで極限要約することが解析的に最適であることを証明。
 *   **2026年技術エコシステム適合**:
     `uv`、`Ruff`、`structlog`、`SQLModel` 状態モデル、および `Granian` 上で動作する `FastAPI` 構成への完全適合。
-*   **詳細成果物**: [new_theorem_L6.md](file:///Users/ryota/ai-cli-reference-1/cli/gemini-cli/theorems/new_theorem_L6.md)
+*   **詳細成果物**: [new_theorem_L6.md](./new_theorem_L6.md)
 
 ### [L7] API制約下の縮退運転境界定理 (v4.0)
 *   **他レイヤー結合の整合性精査**:
     L1（プロンプト圧縮）、L2（状態遷移ループフリー）、L3（スキル直交性）、L4（自己免疫サンドボックス）、L5（DAG最小経路コスト）、L6（最適忘却）、L8（構造化ログ）、L9（自己修復）との相互作用および依存関係を可視化したアーキテクチャモデル of 追加。
 *   **2026年技術エコシステム適合**:
     `Granian` ミドルウェア上での非同期 `async/await` トークンバケット設計、`Next.js 15 + Turbopack` フロントエンドへ Server-Sent Events (SSE) 経由で Slack Time をリアルタイム配信する TypeScript React コンポーネントの実装。
-*   **詳細成果物**: [new_theorem_L7.md](file:///Users/ryota/ai-cli-reference-1/cli/gemini-cli/theorems/new_theorem_L7.md)
+*   **詳細成果物**: [new_theorem_L7.md](./new_theorem_L7.md)
 
 ### [L8] 構造化ログのエントロピー最小化定理 (v4.0)
 *   **他レイヤー結合の数理的具体化**:
     L1〜L7, L9の状態・例外・コンパクション・修復指標がログエントロピーに及ぼす影響を数理的に整理。
 *   **2026年技術エコシステム適合**:
     Next.js 15 / Turbopack から伝搬されるトレースIDを ASGI ミドルウェアで取得し、`structlog.contextvars` にバインドすることで不要キー出力を排除しログエントロピーを極小化する実装例。Google ADK のライフサイクルフック（`hooks.on_compaction` 等）に対応した `L8AgentObservabilityEngine` クラスの提示。
-*   **詳細成果物**: [new_theorem_L8.md](file:///Users/ryota/ai-cli-reference-1/cli/gemini-cli/theorems/new_theorem_L8.md)
+*   **詳細成果物**: [new_theorem_L8.md](./new_theorem_L8.md)
 
 ### [L9] 自己修復ループの不動点収束定理 (v4.0)
 *   **数理コヒーレンスの深化と極限検証**:
     $\Phi = 0 \iff c = c^*$（すべてのテストを通過し、静的エラーが0）を厳密に保証する乗算型ポテンシャルへの洗練、テスト優先境界・意味的非干渉境界・統合リファクタリング境界などのパラメータ安定境界条件の追加、収束性の二重証明（ランタイムポテンシャル単調減少と探索部分空間の単調縮小）。
 *   **2026年技術エコシステム適合**:
     FastAPI (Granian)、Inngest 分散ステップ制御によるべき等な状態遷移（L2）、Google ADK の `Agent`・`response_schema`（`CriticFeedback` 構造化出力）の採用、`uv` による Ruff 静的解析と pytest テスト自動実行、および `structlog` JSONログの統合。
-*   **詳細成果物**: [new_theorem_L9.md](file:///Users/ryota/ai-cli-reference-1/cli/gemini-cli/theorems/new_theorem_L9.md)
+*   **詳細成果物**: [new_theorem_L9.md](./new_theorem_L9.md)
 
 ---
 
