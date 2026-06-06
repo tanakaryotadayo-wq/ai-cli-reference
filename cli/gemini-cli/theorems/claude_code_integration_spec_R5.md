@@ -1,8 +1,8 @@
-# Claude Code 9レイヤー定理統合アーキテクチャ仕様書 (v5.0 - R5)
+# Claude Code 9レイヤー定理統合アーキテクチャ仕様書 (v5.1 - R5最終決定版)
 
 ## 概要
 本仕様書は、自律型AIコーディングエージェントである **Claude Code** に対し、本プロジェクトで確立した「エージェント工学 9レイヤー定理（L1〜L9）」を適用し、自律実行ループの信頼性、リソース効率、セキュリティ、およびエラー自己修復性能を極限まで高めるための統合アーキテクチャ設計を規定する。
-第5ラウンド（R5）においては、これまでの監査で判明した数理モデルおよび実装の致命的バグ（L9 ASTコメントハッシュの非変異性、L6 Lambert W $W_{-1}$ の下限張り付き、L3 OPFの直交射影内積消失、L3ベイズエラー境界と L5 閾値の不整合）を完全に解消し、すべてのレイヤー間結合方程式（コヒーレンス）が非循環・有限収束の数学的証明の下で閉じた最終仕様を定義する。
+第5ラウンド（R5）の最終決定版（v5.1）においては、これまでの監査で判明した数理モデルおよび実装の欠陥（L9 ASTコメントハッシュの非変異性、L6 Lambert W $W_{-1}$ の下限張り付き、L3 OPFの直交射影内積消失、L3ベイズエラー境界と L5 閾値の不整合、L9ダミーハッシュによるループ検知の隠蔽、L7ヒステリシスフリーズ）を完全に解消し、すべてのレイヤー間結合方程式（コヒーレンス）が非循環・有限収束の論理の下で閉じた最終仕様を定義する。
 
 ---
 
@@ -160,8 +160,8 @@
 *   **ユースケース**: Claude Code が持つツール群の説明文が重複し、誤ルーティングが発生するのを防止する。
 *   **適用モデル**:
     埋め込みベクトル間の角度距離 $d(\mathbf{v}_i, \mathbf{v}_j) > \theta_i + \theta_j$。限界極限（球面容量上限 $N_{\max}$ および混雑度 $\rho = N/N_{\max} \ge 1$）での DQS (動的クエリ収縮)、OPF (直交射影フィルタリング)、HNPT (階層的名前空間相転移) を適用する。
-    *   **OPF数理バグ修正**: 主候補 $\mathbf{v}_{\text{best}}$ の直交補空間に残余ベクトルを正しく投影して類似度を算出する。
-    *   **フォールバック境界の統合**: 回避適用後の残余エラー予測値 $\hat{P}_{\text{error}} \ge P_{\text{Bayes}}(\rho) = 1 - 1/\rho$ が、L5臨界閾値 $P_{\text{crit}} = (C_{\text{hitl}} - C_{\text{exec}}) / C_{\text{fail}}$ に達した瞬間、L5 HITLへ安全にフォールバックする。
+    *   **OPF数理定義の訂正**: R4ではクエリを $v_{best}$ 方向へ射影し、それ自体と内積していたため、識別境界を作れない冗長な計算になっていた。R5では最尤候補 $v_{best}$ の直交補空間（orthogonal complement）上へクエリおよび競合候補を射影し、残余空間上での類似度（内積）を正しく評価して識別境界を確保する。
+    *   **経験的フォールバック境界の導入**: 混雑度 $\rho = N/N_{max}$ に応じた経験的誤ルーティングペナルティ関数 $P_{penalty}(\rho) = 1 - 1/\rho$ を定義する。このペナルティ見積もり、または回避適用後の残余エラー予測値が、L5期待コスト比から導出される臨界閾値 $P_{\text{crit}} = (C_{\text{hitl}} - C_{\text{exec}}) / C_{\text{fail}}$ に達した瞬間（あるいは $\rho > \rho_{threshold}$、既定値 2.5）、自律ルーティングを強制停止して L5 HITL へ安全にフォールバックする。
 *   **2026年技術エコシステム適合 (R5実装コード)**:
     ```python
     from sqlmodel import SQLModel, Field, Session, select
@@ -190,13 +190,15 @@
             c_exec: float = 1.0,
             c_hitl: float = 5.0,
             c_fail: float = 50.0,
-            gamma: float = 1.5
+            gamma: float = 1.5,
+            rho_threshold: float = 2.5
         ):
             self.session = db_session
             self.client = embedding_client
             self.n_max = n_max
             self.entropy_crit = entropy_crit
             self.gamma = gamma
+            self.rho_threshold = rho_threshold
             self.p_crit = (c_hitl - c_exec) / max(c_fail, 1e-9)
             self.tools: Dict[str, Dict[str, Any]] = {}
 
@@ -228,6 +230,11 @@
             N = len(self.tools)
             rho = N / self.n_max
             
+            # 経験的混雑度ペナルティによる強制エスカレーション
+            if rho >= self.rho_threshold:
+                logger.warn("routing_degraded_capacity_limit", rho=rho, threshold=self.rho_threshold)
+                return "L5_HITL_FALLBACK", 1.0
+
             # 各ツールとの適合スコア計算
             scores = {}
             for name, meta in self.tools.items():
@@ -273,7 +280,7 @@
             best_candidate = max(candidates, key=candidates.get)
             v_best = self.tools[best_candidate]["embedding"]
             
-            # クエリの直交補空間への射影
+            # クエリの直交補空間への射影 (R5修正)
             q_prime = q_vec - np.dot(q_vec, v_best) * v_best
             q_prime_norm = np.linalg.norm(q_prime)
             
@@ -305,15 +312,13 @@
                 logger.info("transition_to_namespace_router", router=router_name)
                 return router_name, 0.15
                 
-            # ベイズ誤り率の下限値および残余エラー率の推定
-            estimated_p_error = max(1.0 - (1.0 / max(rho, 1e-9)), 0.0)
-            
-            # L5 フォールバック境界の評価
-            if estimated_p_error >= self.p_crit:
-                logger.warn("escalating_to_l5_hitl", estimated_p_error=estimated_p_error, p_crit=self.p_crit)
-                return "L5_HITL_FALLBACK", estimated_p_error
+            # 経験的ペナルティ関数に基づく見積もり
+            estimated_p_penalty = max(1.0 - (1.0 / max(rho, 1e-9)), 0.0)
+            if estimated_p_penalty >= self.p_crit:
+                logger.warn("escalating_to_l5_hitl", estimated_p_penalty=estimated_p_penalty, p_crit=self.p_crit)
+                return "L5_HITL_FALLBACK", estimated_p_penalty
                 
-            return "global_namespace_router", estimated_p_error
+            return "global_namespace_router", estimated_p_penalty
     ```
 
 ### [L4] 自己免疫的サンドボックス隔離定理の適用 (R5)
@@ -344,7 +349,6 @@
             
             if i_eff >= self.crit:
                 logger.error("sandbox_isolation_triggered", risk=i_eff)
-                # L7 の Slack Time 境界条件を同時に判定
                 if self.sandbox.should_force_super_degraded(i_eff):
                     return JSONResponse(
                         status_code=status.HTTP_403_FORBIDDEN,
@@ -439,7 +443,8 @@
 *   **ユースケース**: Claude Code のコンテキストが有限のコンテキスト窓上限に近づき、API料金が急増したり、動作遅延が発生するのを防止する。
 *   **適用モデル**:
     指数型効用とラグランジュ多目的最適化により、Lambert W 解析解を用いて最適圧縮率 $\beta^*$ を算出する。
-    *   **Lambert W 数理および実装バグ修正**: 圧縮率が負または下限に張り付くバグを解消するため、下部枝 $W_{-1}$ から**主枝である $W_0$ (k=0)** を用いた計算モデルへと修正・適用する。
+    *   **Lambert W 数理および実装の修正 (R5)**: 最適圧縮率 $\beta^*$ は、Lambert W 関数の主枝 $W_0$ (k=0) から得た値をもとに、物理的制約範囲を後段のクリップ処理 `clip(beta_opt, beta_min, 1.0)` によって保証する。
+    *   **定義域ガードレール**: 引数 $x = - \frac{\lambda s_i}{e R_i}$ が実数解の存在下限 $-1/e$ を下回る場合は、定義域外（NaN）となるため、例外処理として `beta_min` にクランプ、または即時 `Forget` / `Swap` への強制相転移を実行する。
 *   **2026年技術エコシステム適合 (R5実装コード)**:
     ```python
     import math
@@ -461,30 +466,31 @@
 
         def compute_optimal_compression_ratio(self, s_i: float, R_i: float, H_i: float, lambda_val: float) -> float:
             """
-            Lambert W 関数主枝 W_0 を用いた最適圧縮率 beta_i* の算出 (R5バグ修正適用)
+            Lambert W 関数主枝 W_0 を用いた最適圧縮率 beta_i* の算出とガードレール (v5.1修正)
             """
             if H_i <= 0:
                 return 1.0
             
-            # Lambert W の引数を算出。実数解存在境界 (lambda * s_i <= R_i) に適合
+            # 定義域限界ガードレール
             argument = - (lambda_val * s_i) / (math.e * R_i)
             if argument < -1.0 / math.e:
-                # 限界値を下回った場合は最小圧縮にフォールバック
+                # 実数解が存在しない定義域外では最小圧縮にクランプしてフォールバック
                 return self.beta_min
             try:
-                # 主枝 k=0 を使用して正の物理的圧縮率を安定的に算出
+                # 主枝 k=0 を使用して基準となる値を算出
                 w_val = sp.lambertw(argument, k=0).real
                 beta_opt = (1.0 + w_val) / (self.gamma * H_i)
+                # 後段のクリップ処理で物理的範囲 [beta_min, 1.0] への射影を保証
                 return max(self.beta_min, min(1.0, beta_opt))
             except Exception:
                 return self.beta_min
     ```
-    *(※ SQLModelによる永続化スキーマ、MLX-LMおよびクラウド制約変数プロバイダ、Gotenberg連携アーカイブAPIは、R4定義に準ずる)*
 
 ### [L7] API制約下の縮退運転境界定理の適用 (R5)
 *   **ユースケース**: Claude Code 実行中に API のレートリミットや接続遮断が発生した場合、またはデッドラインが迫っている場合に、ハングアップを回避して動作を継続する。
 *   **適用モデル**:
-    境界関数 $\Gamma_i(C(t), L(t)) = W^{(i)} + \tau^{(i), safe} - L(t)$ を評価し、容量・時間の二重ヒステリシスを適用して Zeno 動作の完全排除とリアプノフ安定（不連続減少）性を数学的に保証する。
+    境界関数 $\Gamma_i(C(t), L(t)) = W^{(i)} + \tau^{(i), safe} - L(t)$ を評価し、容量・時間の二重ヒステリシスを適用して Zeno 動作の排除を保証する。
+    *   **ヒステリシスと膠着回避の役割定義**: ヒステリシスは切り替えのチャタリングを防ぐ「安定化（振動抑制）専用」のメカニズムとして機能し、膠着状態からのループ脱出は L9 の `MAX_L9_MUTATIONS` 等による L5 (HITL) への非局所フォールバックが担うよう、レイヤー間で役割を分離する。
 *   **2026年技術エコシステム適合 (R5実装コード)**:
     ```python
     import time
@@ -561,7 +567,8 @@
 *   **ユースケース**: Claude Code が生成・修正したコードにエラーが検出された際、デバッグ修復ループを確実に終了（テスト合格の不動点へ収束）させる。
 *   **適用モデル**:
     正規化 AST ハッシュ $H(a_t)$ による厳密サイクル判定と、履歴ペナルティ付き修正ポテンシャル関数 $\Psi(a_t, \mathcal{H}_t)$ の狭義単調減少。
-    *   **ASTハッシュ変異バグ修正**: コメント挿入では AST ハッシュが変化しないため、ASTのModuleルートノードに対し、ステップ数に応じた無害なダミー変数代入文（例: `_l9_mutation_step = {step}`）を動的に差し込み、セマンティクスに影響を与えずにハッシュ値を変化させて循環検知での早期安全相転移（脱出）を保証する。
+    *   **ASTハッシュ変異とループ検知の分離 (v5.1)**: ASTのModuleルートノードに対し、変異ステップ数に応じた無害なダミー変数代入文（例: `_l9_mutation_step = {step}`）を動的に差し込み、世代を区別する。ただし、ループ（有向閉路）の検知に使用する AST ハッシュの生成時には、このダミー変数 `_l9_mutation_step` を AST から除外し、純粋な意味構造が衝突しているかを正確に評価する。
+    *   **二重の停止境界条件**: 純粋な意味的ハッシュの履歴衝突が検知された場合、または同一エラーに対する試行が最大イテレーション限界 `MAX_L9_MUTATIONS` (上限 5) に達した場合は、ループの迷走を防ぐために自律修復を強制的に打ち切り、L5 (HITL) または L7 (縮退運転) へと安全に相転移（非局所フォールバック）させる。
 *   **2026年技術エコシステム適合 (R5実装コード)**:
     ```python
     import ast
@@ -576,7 +583,7 @@
 
             def visit_Module(self, node: ast.Module) -> ast.Module:
                 self.generic_visit(node)
-                # ASTの先頭に無害なダミー変数代入を差し込み、ハッシュを一意に変異させる (R5バグ修正)
+                # 世代追跡用ダミー変数の動的追加
                 if self.mutation_step is not None:
                     target = ast.Name(id='_l9_mutation_step', ctx=ast.Store())
                     value = ast.Constant(value=self.mutation_step)
@@ -590,13 +597,23 @@
                     node.body.pop(0)  # docstring の削除
                 return node
 
+            def visit_Assign(self, node: ast.Assign) -> Optional[ast.Assign]:
+                # 循環検知用のハッシュ作成時、ダミー変数は AST から除外して正規化する (v5.1修正)
+                if len(node.targets) == 1 and isinstance(node.targets[0], ast.Name):
+                    if node.targets[0].id == '_l9_mutation_step':
+                        return None  # ノードの削除
+                self.generic_visit(node)
+                return node
+
         def __init__(self):
             pass
 
-        def get_hash(self, source_code: str, mutation_step: Optional[int] = None) -> str:
+        def get_hash(self, source_code: str, mutation_step: Optional[int] = None, for_cycle_check: bool = False) -> str:
             try:
                 tree = ast.parse(source_code)
-                transformer = self.NormalizerTransformer(mutation_step=mutation_step)
+                # 循環検知用の場合はダミーノードを反映せず無視する
+                step_val = None if for_cycle_check else mutation_step
+                transformer = self.NormalizerTransformer(mutation_step=step_val)
                 transformer.visit(tree)
                 ast.fix_missing_locations(tree)
                 serialized = ast.dump(tree, annotate_fields=False, include_attributes=False)
@@ -607,18 +624,18 @@
 
 ---
 
-## 2. 統合コヒーレンスの方程式系 (v5.0 - R5最終定式)
+## 2. 統合コヒーレンスの方程式系 (v5.1最終定式)
 
 各レイヤーの境界値は、以下の数理的結合方程式を通じて完全同期し、システム全体の調和的安定性を担保する。
 
 1.  **ルーティングと成功確率 (L3 $\to$ L5)**:
     L3ルーティングの曖昧度誤差を $\epsilon(q)$ としたとき、L5における自律タスクの成功確率は以下のように制約される：
     $$P_{success} \le (1 - \epsilon(q)) P_{base}$$
-    さらに、混雑度 $\rho \ge 1$ 下におけるベイズ誤り率の下限 $P_{\text{Bayes}}(\rho) = 1 - 1/\rho$ が L5 臨界閾値 $P_{\text{crit}} = (C_{\text{hitl}} - C_{\text{exec}}) / C_{\text{fail}}$ を超えた場合（$P_{\text{Bayes}}(\rho) \ge P_{\text{crit}}$）、システムは自律動作を強制遮断して L5 (HITLエスカレーション) へ安全にフォールバックする。
+    さらに、混雑度 $\rho = N/N_{max}$ に基づく経験的ペナルティ $P_{penalty}(\rho) = 1 - 1/\rho$ またはルーティングエラー率が L5 の臨界閾値 $P_{\text{crit}} = (C_{\text{hitl}} - C_{\text{exec}}) / C_{\text{fail}}$ を超えた場合（あるいは $\rho \ge \rho_{threshold}$）、システムは自律動作を強制遮断して L5 (HITLエスカレーション) へ安全にフォールバックする。
 2.  **セキュリティ制限と成功確率 (L4 $\to$ L5)**:
     L4の実効リスク $I_{eff} \ge I_{crit}$ のとき、サンドボックス権限が収縮するため、L5の自律成功確率は強制的に $P_{success} = 0$ となり、直ちにHITL介入閾値を下回ってエスカレーションを発生させる。
 3.  **状態解像度とループフリー (L6 $\to$ L2)**:
-    L6がコンテキスト窓節約のために忘却を行う際、L2のループフリー判定を保証するために必要な最小マーク解像度 $H_{crit}$ が下限境界として強制される：
+    L6がコンテキスト窓節約のために忘却を行う際、L2의ループフリー判定を保証するために必要な最小マーク解像度 $H_{crit}$ が下限境界として強制される：
     $$\sum_{i: active} \eta(a_i) H_i R_i \ge H_{crit}$$
 4.  **デッドラインと遅延境界 (L7 $\to$ L6)**:
     L7のSlack Time $L(t)$ に基づき、L6の許容遅延境界 $D_{max}$ が $D_{max}(t) \propto L(t)$ として動的に短縮される。これに伴い、遅延のシャドウプライス $\mu \to \infty$ となり、解凍遅延 $\tau_{\text{comp}} > 0$ や I/O遅延 $d_{\text{swap}} > 0$ を伴うアクションの期待効用が著しく低下するため、スワップおよび圧縮処理が禁止され、保持（Keep）か忘却（Forget）かのバイナリ選択（LIBC: Latency Induced Binary Choice）へと相転移する。このとき、境界条件が崩壊している要素 ($\lambda s_i > R_i$) は純効用が負となるため強制的に $Forget$ （完全忘却）される。
@@ -631,4 +648,4 @@
     $$L(t_{emit}) \le t_{rec} \implies M(t) \to M^{(4)}$$
     ここで、 $t_{rec} = \tau_A + K_{min} \cdot \left\lceil \frac{0.6}{\eta} \right\rceil \cdot \delta_t + \tau_{overhead}$ である。
 7.  **自己修復限界と相転移 (L9 $\to$ L7/L5)**:
-    L9の自己修復中にサイクル（同一ASTハッシュ）が検知された場合、または突然変異試行回数が限界値 $K_{mutate}$ に達した場合、およびリソース制限ステップ上限（L7 Slack Time $L(t)$ から算出される $t_{max}$）に達した場合、遷移インジケータ $P_{transit}(t) = 1$ が成立し、システムは自律修復を直ちに打ち切る。これにより、L2における有向閉路を完全に排除した上で、状況に応じて L7（縮退運転モード）または L5（HITLエスカレーション）へ安全に制御権を相転移させる。
+    L9の自己修復中に純粋なAST意味ハッシュの履歴衝突（有向閉路）が検知された場合、または試行イテレーション回数が `MAX_L9_MUTATIONS` (上限 5) に達した場合、およびリソース制限ステップ上限（L7 Slack Time $L(t)$ から算出される $t_{max}$）に達した場合、遷移インジケータ $P_{transit}(t) = 1$ が成立し、システムは自律修復を直ちに打ち切る。これにより、L2における有向閉路を完全に排除した上で、状況に応じて L7（縮退運転モード）または L5（HITLエスカレーション）へ安全に制御権を相転移（非局所遷移）させる。
