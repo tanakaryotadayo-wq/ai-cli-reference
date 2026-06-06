@@ -1,0 +1,43 @@
+name: Validate Repository
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Lint & Format Tool (Ruff)
+        run: |
+          pip install ruff
+
+      - name: Install Dependencies for Syntax Check
+        run: |
+          pip install numpy langgraph scipy structlog requests markdown
+
+      - name: Ban Local File URLs (Strict Verification)
+        run: |
+          # キャッシュフォルダとGit以外から file:///Users/ の残存を検査
+          if grep -R "file:///Users/" --exclude-dir=".git" --exclude-dir=".claude" --exclude-dir=".codex" --exclude-dir=".copilot" -n .; then
+            echo "Error: Local absolute file:///Users/ URLs detected!"
+            exit 1
+          fi
+
+      - name: Python Syntax Check
+        run: |
+          python -m compileall -q .
+
+      - name: Lint with Ruff
+        run: |
+          ruff check .

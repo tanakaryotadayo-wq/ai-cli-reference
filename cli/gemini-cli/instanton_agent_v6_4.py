@@ -1,8 +1,8 @@
-"""Wick-Loop Instanton Theorem V6.4 for AI Agent Search and Reasoning.
+"""Wick-Loop Instanton Theorem V6.4.0 (Theorem V2.1 / Governance V6.0) for AI Agent Search and Reasoning.
 
 This module provides classes for detecting cognitive loops in AI agents,
 performing instanton-based state tunneling to escape localized reasoning loops,
-and applying Version 6.4 Governance Framework features (Memory Injection/Negative Constraints,
+and applying Governance Framework V6.0 features (Memory Injection/Negative Constraints,
 Safe Mode state gating, stable run counter clearing, local action slicing,
 external score co-op, serialized state management, non-linear kinetic cost,
 deferred annealing, adaptive search noise, mathematical boundary clipping,
@@ -14,8 +14,13 @@ from typing import Any, Callable, Dict, List, Optional, Tuple
 import numpy as np
 import structlog
 
+__version__ = "6.4.0"
+THEOREM_VERSION = "2.1"
+GOVERNANCE_VERSION = "6.0"
+
 # structlogの設定
 logger = structlog.get_logger()
+
 
 # タイプヒントのエイリアス
 Vector = np.ndarray
