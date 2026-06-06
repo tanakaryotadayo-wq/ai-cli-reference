@@ -1,0 +1,92 @@
+{
+  "loop_1_redundant_tool": {
+    "Normal Retry": {
+      "escaped": false,
+      "correct": false,
+      "tokens_used": 20000,
+      "execution_time": 10.0,
+      "steps": 20
+    },
+    "Max Retry": {
+      "escaped": false,
+      "correct": false,
+      "tokens_used": 10000,
+      "execution_time": 5.0,
+      "steps": 10
+    },
+    "Temperature Escalation": {
+      "escaped": true,
+      "correct": false,
+      "tokens_used": 24000,
+      "execution_time": 12.0,
+      "steps": 20
+    },
+    "Reflection": {
+      "escaped": true,
+      "correct": true,
+      "tokens_used": 17000,
+      "execution_time": 8.5,
+      "steps": 9
+    }
+  },
+  "loop_2_self_validation": {
+    "Normal Retry": {
+      "escaped": false,
+      "correct": false,
+      "tokens_used": 20000,
+      "execution_time": 10.0,
+      "steps": 20
+    },
+    "Max Retry": {
+      "escaped": false,
+      "correct": false,
+      "tokens_used": 10000,
+      "execution_time": 5.0,
+      "steps": 10
+    },
+    "Temperature Escalation": {
+      "escaped": true,
+      "correct": false,
+      "tokens_used": 24000,
+      "execution_time": 12.0,
+      "steps": 20
+    },
+    "Reflection": {
+      "escaped": true,
+      "correct": true,
+      "tokens_used": 17000,
+      "execution_time": 8.5,
+      "steps": 9
+    }
+  },
+  "loop_3_api_escalation": {
+    "Normal Retry": {
+      "escaped": false,
+      "correct": false,
+      "tokens_used": 20000,
+      "execution_time": 10.0,
+      "steps": 20
+    },
+    "Max Retry": {
+      "escaped": false,
+      "correct": false,
+      "tokens_used": 10000,
+      "execution_time": 5.0,
+      "steps": 10
+    },
+    "Temperature Escalation": {
+      "escaped": true,
+      "correct": false,
+      "tokens_used": 24000,
+      "execution_time": 12.0,
+      "steps": 20
+    },
+    "Reflection": {
+      "escaped": true,
+      "correct": true,
+      "tokens_used": 17000,
+      "execution_time": 8.5,
+      "steps": 9
+    }
+  }
+}
