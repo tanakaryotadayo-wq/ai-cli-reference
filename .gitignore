@@ -1,7 +1,7 @@
 # Binaries & caches
 cli/.claude/downloads/
 cli/.claude/plugins/cache/
-cli/.codex/tmp/
+cli/.codex/.tmp/
 cli/.codex/worktrees/
 cli/.codex/vendor_imports/
 cli/.copilot/session-state/
