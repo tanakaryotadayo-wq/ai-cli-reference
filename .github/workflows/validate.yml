@@ -29,10 +29,11 @@ jobs:
       - name: Ban Local File URLs (Strict Verification)
         run: |
           # キャッシュフォルダとGit以外から file:///Users/ の残存を検査
-          if grep -R "file:///Users/" --exclude-dir=".git" --exclude-dir=".claude" --exclude-dir=".codex" --exclude-dir=".copilot" -n .; then
+          if grep -R "file:///Users/" --exclude-dir=".git" --exclude-dir=".claude" --exclude-dir=".codex" --exclude-dir=".copilot" --exclude-dir=".github" -n .; then
             echo "Error: Local absolute file:///Users/ URLs detected!"
             exit 1
           fi
+
 
       - name: Python Syntax Check
         run: |
