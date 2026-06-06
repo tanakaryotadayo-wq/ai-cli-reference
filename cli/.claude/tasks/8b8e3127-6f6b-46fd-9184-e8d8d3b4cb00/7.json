@@ -1,0 +1,9 @@
+{
+  "id": "7",
+  "subject": "Test call() API auth bypass on AIUnitProvider",
+  "description": "Systematically test auth bypass vectors on content://com.oplus.aiunit.authority.open/ call() API based on decompiled source analysis. Test: query_ai_setting_switch_status (no auth), package_name spoofing, auth_style manipulation, common_call sub-commands.",
+  "activeForm": "Testing call() API auth bypass",
+  "status": "in_progress",
+  "blocks": [],
+  "blockedBy": []
+}

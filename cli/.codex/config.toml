@@ -1,0 +1,105 @@
+personality = "pragmatic"
+model = "gpt-5.5"
+model_reasoning_effort = "medium"
+approval_policy = "never"
+sandbox_mode    = "workspace-write"
+[projects."/Users/ryota"]
+trust_level = "trusted"
+
+# Antigravity MCP Server - Titan Core Integration
+[mcp_servers.antigravity]
+command = "python3"
+args = ["/Users/ryota/.gemini/antigravity/scratch/antigravity-mcp-server/server.py"]
+tool_timeout_sec = 300
+
+[mcp_servers.antigravity.env]
+TITAN_URL = "http://100.73.164.45:11434"
+
+[mcp_servers.notion]
+url = "https://mcp.notion.com/mcp"
+
+[mcp_servers.linear]
+url = "https://mcp.linear.app/mcp"
+
+[marketplaces.openai-bundled]
+last_updated = "2026-05-27T02:38:18Z"
+source_type = "local"
+source = "/Users/ryota/.codex/.tmp/bundled-marketplaces/openai-bundled"
+
+[marketplaces.openai-primary-runtime]
+last_updated = "2026-05-08T09:29:53Z"
+source_type = "local"
+source = "/Users/ryota/.cache/codex-runtimes/codex-primary-runtime/plugins/openai-primary-runtime"
+
+[plugins."documents@openai-primary-runtime"]
+enabled = true
+
+[plugins."spreadsheets@openai-primary-runtime"]
+enabled = true
+
+[plugins."presentations@openai-primary-runtime"]
+enabled = true
+
+[plugins."github@openai-curated"]
+enabled = true
+
+[plugins."browser-use@openai-bundled"]
+enabled = true
+
+[apps.connector_0f9c9d4592e54d0a9a12b3f44a1e2010]
+enabled = false
+
+[[skills.config]]
+path = "/Users/ryota/.codex/skills/doc/SKILL.md"
+enabled = false
+
+[[skills.config]]
+path = "/Users/ryota/.codex/skills/screenshot/SKILL.md"
+enabled = false
+
+[[skills.config]]
+name = "spreadsheets:Spreadsheets"
+enabled = false
+
+[[skills.config]]
+path = "/Users/ryota/.agents/skills/microsoft-foundry/models/deploy-model/preset/SKILL.md"
+enabled = false
+
+[[skills.config]]
+name = "presentations:Presentations"
+enabled = false
+
+[[skills.config]]
+path = "/Users/ryota/.agents/skills/microsoft-foundry/SKILL.md"
+enabled = false
+
+[[skills.config]]
+path = "/Users/ryota/.codex/skills/.system/imagegen/SKILL.md"
+enabled = false
+
+[[skills.config]]
+name = "github:yeet"
+enabled = false
+
+[[skills.config]]
+name = "github:github"
+enabled = false
+
+[[skills.config]]
+path = "/Users/ryota/.codex/skills/gh-address-comments/SKILL.md"
+enabled = false
+
+[[skills.config]]
+path = "/Users/ryota/.agents/skills/microsoft-foundry/models/deploy-model/customize/SKILL.md"
+enabled = false
+
+[[skills.config]]
+path = "/Users/ryota/.agents/skills/microsoft-foundry/models/deploy-model/SKILL.md"
+enabled = false
+
+[[skills.config]]
+path = "/Users/ryota/.codex/skills/cloudflare-deploy/SKILL.md"
+enabled = false
+
+[tui.model_availability_nux]
+"gpt-5.5" = 3

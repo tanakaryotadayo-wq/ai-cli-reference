@@ -1,0 +1,215 @@
+{
+  "version": 2,
+  "plugins": {
+    "code-simplifier@claude-plugins-official": [
+      {
+        "scope": "user",
+        "installPath": "/Users/ryota/.claude/plugins/cache/claude-plugins-official/code-simplifier/1.0.0",
+        "version": "1.0.0",
+        "installedAt": "2026-03-01T13:20:38.317Z",
+        "lastUpdated": "2026-03-01T13:20:38.317Z",
+        "gitCommitSha": "55b58ec6e5649104f926ba7558b567dc8d33c5ff"
+      }
+    ],
+    "code-review@claude-plugins-official": [
+      {
+        "scope": "user",
+        "installPath": "/Users/ryota/.claude/plugins/cache/claude-plugins-official/code-review/unknown",
+        "version": "unknown",
+        "installedAt": "2026-03-01T13:20:59.836Z",
+        "lastUpdated": "2026-03-31T05:37:21.587Z",
+        "gitCommitSha": "55b58ec6e5649104f926ba7558b567dc8d33c5ff"
+      }
+    ],
+    "skill-creator@claude-plugins-official": [
+      {
+        "scope": "user",
+        "installPath": "/Users/ryota/.claude/plugins/cache/claude-plugins-official/skill-creator/unknown",
+        "version": "unknown",
+        "installedAt": "2026-03-01T13:21:33.761Z",
+        "lastUpdated": "2026-03-31T05:37:21.611Z",
+        "gitCommitSha": "55b58ec6e5649104f926ba7558b567dc8d33c5ff"
+      }
+    ],
+    "feature-dev@claude-plugins-official": [
+      {
+        "scope": "user",
+        "installPath": "/Users/ryota/.claude/plugins/cache/claude-plugins-official/feature-dev/unknown",
+        "version": "unknown",
+        "installedAt": "2026-03-01T13:36:09.517Z",
+        "lastUpdated": "2026-03-31T05:37:21.595Z",
+        "gitCommitSha": "55b58ec6e5649104f926ba7558b567dc8d33c5ff"
+      }
+    ],
+    "plugin-dev@claude-plugins-official": [
+      {
+        "scope": "user",
+        "installPath": "/Users/ryota/.claude/plugins/cache/claude-plugins-official/plugin-dev/unknown",
+        "version": "unknown",
+        "installedAt": "2026-03-01T13:37:04.525Z",
+        "lastUpdated": "2026-03-31T05:37:21.636Z",
+        "gitCommitSha": "55b58ec6e5649104f926ba7558b567dc8d33c5ff"
+      }
+    ],
+    "hookify@claude-plugins-official": [
+      {
+        "scope": "user",
+        "installPath": "/Users/ryota/.claude/plugins/cache/claude-plugins-official/hookify/unknown",
+        "version": "unknown",
+        "installedAt": "2026-03-01T13:37:30.055Z",
+        "lastUpdated": "2026-03-31T05:37:21.617Z",
+        "gitCommitSha": "55b58ec6e5649104f926ba7558b567dc8d33c5ff"
+      }
+    ],
+    "agent-sdk-dev@claude-plugins-official": [
+      {
+        "scope": "user",
+        "installPath": "/Users/ryota/.claude/plugins/cache/claude-plugins-official/agent-sdk-dev/unknown",
+        "version": "unknown",
+        "installedAt": "2026-03-06T07:55:27.897Z",
+        "lastUpdated": "2026-03-31T05:37:21.592Z",
+        "gitCommitSha": "205b6e0b30366a969412d9aab7b99bea99d58db1"
+      }
+    ],
+    "claude-code-setup@claude-plugins-official": [
+      {
+        "scope": "user",
+        "installPath": "/Users/ryota/.claude/plugins/cache/claude-plugins-official/claude-code-setup/1.0.0",
+        "version": "1.0.0",
+        "installedAt": "2026-03-06T07:56:00.246Z",
+        "lastUpdated": "2026-03-06T07:56:00.246Z",
+        "gitCommitSha": "205b6e0b30366a969412d9aab7b99bea99d58db1"
+      }
+    ],
+    "claude-md-management@claude-plugins-official": [
+      {
+        "scope": "user",
+        "installPath": "/Users/ryota/.claude/plugins/cache/claude-plugins-official/claude-md-management/1.0.0",
+        "version": "1.0.0",
+        "installedAt": "2026-03-06T07:56:59.435Z",
+        "lastUpdated": "2026-03-06T07:56:59.435Z",
+        "gitCommitSha": "205b6e0b30366a969412d9aab7b99bea99d58db1"
+      }
+    ],
+    "qodo-skills@claude-plugins-official": [
+      {
+        "scope": "user",
+        "installPath": "/Users/ryota/.claude/plugins/cache/claude-plugins-official/qodo-skills/0.6.1",
+        "version": "0.6.1",
+        "installedAt": "2026-03-06T14:10:34.580Z",
+        "lastUpdated": "2026-04-14T00:22:57.127Z",
+        "gitCommitSha": "623eb4ed4364d8111f9a9132a791d7497d814b6a"
+      }
+    ],
+    "posthog@claude-plugins-official": [
+      {
+        "scope": "user",
+        "installPath": "/Users/ryota/.claude/plugins/cache/claude-plugins-official/posthog/1.1.5",
+        "version": "1.1.5",
+        "installedAt": "2026-03-06T14:10:48.036Z",
+        "lastUpdated": "2026-04-21T00:51:30.556Z",
+        "gitCommitSha": "4122119322584efc7a3e483b9c1cc2e4903ebeec"
+      }
+    ],
+    "firecrawl@claude-plugins-official": [
+      {
+        "scope": "user",
+        "installPath": "/Users/ryota/.claude/plugins/cache/claude-plugins-official/firecrawl/1.0.8",
+        "version": "1.0.8",
+        "installedAt": "2026-03-06T14:10:52.872Z",
+        "lastUpdated": "2026-04-14T00:22:57.203Z",
+        "gitCommitSha": "684b975c8cc6bd0fcfa96f787900bf87fffeef57"
+      }
+    ],
+    "semgrep@claude-plugins-official": [
+      {
+        "scope": "user",
+        "installPath": "/Users/ryota/.claude/plugins/cache/claude-plugins-official/semgrep/0.5.3",
+        "version": "0.5.3",
+        "installedAt": "2026-03-06T14:10:56.798Z",
+        "lastUpdated": "2026-04-14T00:22:58.222Z",
+        "gitCommitSha": "b5bab16514897d36de10ebb14ebd5437095d9b9d"
+      }
+    ],
+    "circleback@claude-plugins-official": [
+      {
+        "scope": "user",
+        "installPath": "/Users/ryota/.claude/plugins/cache/claude-plugins-official/circleback/1.0.0",
+        "version": "1.0.0",
+        "installedAt": "2026-03-06T14:11:00.319Z",
+        "lastUpdated": "2026-03-06T14:11:00.319Z",
+        "gitCommitSha": "6369dec7da4059dd0a12cf1b62ba749799ee15ef"
+      }
+    ],
+    "csharp-lsp@claude-plugins-official": [
+      {
+        "scope": "user",
+        "installPath": "/Users/ryota/.claude/plugins/cache/claude-plugins-official/csharp-lsp/1.0.0",
+        "version": "1.0.0",
+        "installedAt": "2026-03-06T14:11:04.949Z",
+        "lastUpdated": "2026-03-06T14:11:04.949Z",
+        "gitCommitSha": "205b6e0b30366a969412d9aab7b99bea99d58db1"
+      }
+    ],
+    "rust-analyzer-lsp@claude-plugins-official": [
+      {
+        "scope": "user",
+        "installPath": "/Users/ryota/.claude/plugins/cache/claude-plugins-official/rust-analyzer-lsp/1.0.0",
+        "version": "1.0.0",
+        "installedAt": "2026-03-06T14:11:18.581Z",
+        "lastUpdated": "2026-03-06T14:11:18.581Z",
+        "gitCommitSha": "205b6e0b30366a969412d9aab7b99bea99d58db1"
+      }
+    ],
+    "security-guidance@claude-plugins-official": [
+      {
+        "scope": "user",
+        "installPath": "/Users/ryota/.claude/plugins/cache/claude-plugins-official/security-guidance/unknown",
+        "version": "unknown",
+        "installedAt": "2026-03-06T14:11:34.149Z",
+        "lastUpdated": "2026-03-31T05:37:21.591Z",
+        "gitCommitSha": "205b6e0b30366a969412d9aab7b99bea99d58db1"
+      }
+    ],
+    "learning-output-style@claude-plugins-official": [
+      {
+        "scope": "user",
+        "installPath": "/Users/ryota/.claude/plugins/cache/claude-plugins-official/learning-output-style/1.0.0",
+        "version": "1.0.0",
+        "installedAt": "2026-03-06T14:11:53.278Z",
+        "lastUpdated": "2026-03-31T05:37:21.593Z",
+        "gitCommitSha": "205b6e0b30366a969412d9aab7b99bea99d58db1"
+      }
+    ],
+    "coderabbit@claude-plugins-official": [
+      {
+        "scope": "user",
+        "installPath": "/Users/ryota/.claude/plugins/cache/claude-plugins-official/coderabbit/1.1.0",
+        "version": "1.1.0",
+        "installedAt": "2026-03-06T14:12:08.845Z",
+        "lastUpdated": "2026-04-14T00:22:57.151Z",
+        "gitCommitSha": "51651e86d8d71e150e13313f43298f212abb47db"
+      }
+    ],
+    "context7@claude-plugins-official": [
+      {
+        "scope": "user",
+        "installPath": "/Users/ryota/.claude/plugins/cache/claude-plugins-official/context7/unknown",
+        "version": "unknown",
+        "installedAt": "2026-03-06T14:12:16.144Z",
+        "lastUpdated": "2026-03-31T05:37:21.586Z",
+        "gitCommitSha": "205b6e0b30366a969412d9aab7b99bea99d58db1"
+      }
+    ],
+    "pr-review-toolkit@claude-plugins-official": [
+      {
+        "scope": "user",
+        "installPath": "/Users/ryota/.claude/plugins/cache/claude-plugins-official/pr-review-toolkit/unknown",
+        "version": "unknown",
+        "installedAt": "2026-03-06T14:13:14.508Z",
+        "lastUpdated": "2026-03-31T05:37:21.600Z",
+        "gitCommitSha": "205b6e0b30366a969412d9aab7b99bea99d58db1"
+      }
+    ]
+  }
+}

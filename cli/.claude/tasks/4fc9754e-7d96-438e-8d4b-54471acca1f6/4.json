@@ -1,0 +1,9 @@
+{
+  "id": "4",
+  "subject": "Enumerate and test all common_call subcommands",
+  "description": "Find all subcommands (ai::value::get_settings etc.) from source and test each via adb",
+  "activeForm": "Enumerating subcommands",
+  "status": "in_progress",
+  "blocks": [],
+  "blockedBy": []
+}

@@ -1,0 +1,27 @@
+{
+  "locations": {
+    "/Users/ryota": {
+      "tool_approvals": [
+        {
+          "kind": "commands",
+          "commandIdentifiers": [
+            "mkdir",
+            "printf"
+          ]
+        },
+        {
+          "kind": "commands",
+          "commandIdentifiers": [
+            "curl"
+          ]
+        },
+        {
+          "kind": "commands",
+          "commandIdentifiers": [
+            "python"
+          ]
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,32 @@
+[
+  {
+    "content": "Python 3.14 の壊れた環境を修復",
+    "status": "completed",
+    "activeForm": "Python 3.14 環境を修復中"
+  },
+  {
+    "content": "backend: uvicorn → Granian に置き換え",
+    "status": "completed",
+    "activeForm": "backend の Granian 移行中"
+  },
+  {
+    "content": "app.py (ルート): Flask → FastAPI + Granian に変換",
+    "status": "completed",
+    "activeForm": "app.py を FastAPI に変換中"
+  },
+  {
+    "content": "ai-web/web.py: Flask → FastAPI + Granian に変換",
+    "status": "in_progress",
+    "activeForm": "ai-web を FastAPI に変換中"
+  },
+  {
+    "content": "professor-app/app.py: Flask → FastAPI + Granian に変換",
+    "status": "pending",
+    "activeForm": "professor-app を FastAPI に変換中"
+  },
+  {
+    "content": "launch.json を全て Granian に更新",
+    "status": "pending",
+    "activeForm": "launch.json を更新中"
+  }
+]

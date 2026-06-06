@@ -1,0 +1,10 @@
+version = 1
+id = "automation"
+name = "自動更新"
+prompt = "思想と実装が合わないところを追求し、改善レポートを作成。それを元にして、やるべきことを割り出し、詳細な設計図書いて。できれば完成させることが1番。"
+status = "PAUSED"
+rrule = "RRULE:FREQ=WEEKLY;BYHOUR=9;BYMINUTE=0;BYDAY=SU,MO,TU,WE,TH,FR,SA"
+execution_environment = "worktree"
+cwds = ["/Users/ryota"]
+created_at = 1772792455471
+updated_at = 1773241113249

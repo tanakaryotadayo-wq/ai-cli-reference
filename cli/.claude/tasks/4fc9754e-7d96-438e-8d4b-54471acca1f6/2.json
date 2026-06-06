@@ -1,0 +1,9 @@
+{
+  "id": "2",
+  "subject": "Analyze AIUnitProvider call() auth_style authentication logic",
+  "description": "Deep analysis of the call() method, auth_style validation, package_name verification, and identify bypass vectors",
+  "activeForm": "Analyzing auth logic",
+  "status": "completed",
+  "blocks": [],
+  "blockedBy": []
+}

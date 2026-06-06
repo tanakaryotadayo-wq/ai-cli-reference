@@ -1,0 +1,9 @@
+{
+  "id": "3",
+  "subject": "Attempt auth bypass via adb shell content call",
+  "description": "Try auth_style=0 and other values, test check_unit_supported and common_call subcommands",
+  "activeForm": "Testing auth bypass",
+  "status": "in_progress",
+  "blocks": [],
+  "blockedBy": []
+}

@@ -1,0 +1,34 @@
+2026-06-02T07:46:07.239Z [INFO] Shell completions: no writable completion directory found for zsh, skipping
+2026-06-02T07:46:07.239Z [INFO] Session indexing debug: SESSION_INDEXING=true, repository=undefined
+2026-06-02T07:46:07.253Z [INFO] Workspace initialized: 1f50e169-039a-4acf-a942-820831136100 (checkpoints: 0)
+2026-06-02T07:46:07.764Z [INFO] Starting Copilot CLI: 1.0.57
+2026-06-02T07:46:07.764Z [INFO] Node.js version: v24.16.0
+2026-06-02T07:46:07.766Z [INFO] Registering foreground session: 1f50e169-039a-4acf-a942-820831136100
+2026-06-02T07:46:07.770Z [WARNING] [Node.js warning] Possible EventEmitter memory leak detected. 11 paletteColor listeners added to [FTe]. MaxListeners is 10. Use emitter.setMaxListeners() to increase limit
+2026-06-02T07:46:07.772Z [INFO] Remote session export enabled: https://api.individual.githubcopilot.com/agents
+2026-06-02T07:46:07.773Z [INFO] No GitHub repository detected — creating repo-less remote session
+2026-06-02T07:46:07.938Z [INFO] ICU native addon loaded
+2026-06-02T07:46:07.973Z [INFO] Login status unknown
+2026-06-02T07:46:07.983Z [INFO] Remote session access enabled
+2026-06-02T07:46:07.986Z [ERROR] permissions.resetSessionApprovals failed: Error: Permission service is unavailable for this session.
+2026-06-02T07:46:07.993Z [INFO] Welcome tanakaryotadayo-wq (via gh)!
+2026-06-02T07:46:08.025Z [INFO] Unregistering foreground session: 1f50e169-039a-4acf-a942-820831136100
+2026-06-02T07:46:08.025Z [INFO] Registering foreground session: 1f50e169-039a-4acf-a942-820831136100
+2026-06-02T07:46:08.035Z [INFO] Init suggestion check completed
+2026-06-02T07:46:08.042Z [ERROR] Starting remote MCP client for github-mcp-server with url: https://api.individual.githubcopilot.com/mcp/readonly
+2026-06-02T07:46:08.042Z [ERROR] Creating MCP client for github-mcp-server...
+2026-06-02T07:46:08.042Z [ERROR] Connecting MCP client for github-mcp-server...
+2026-06-02T07:46:08.043Z [INFO] Applied 4 persisted location permission rules for /Users/ryota
+2026-06-02T07:46:08.043Z [INFO] Applied 4 location-based permission rules from /Users/ryota
+2026-06-02T07:46:08.616Z [INFO] No update needed, current version is 1.0.57, fetched latest release is v1.0.57
+2026-06-02T07:46:08.957Z [INFO] RemoteSessionExporter: active with session b1c64c89-d8af-42c7-ba37-659f3e4de16d
+2026-06-02T07:46:08.957Z [INFO] Remote session export active (not steerable): https://github.com/copilot/tasks/21b6f559-f51d-430e-a9e8-cc9ba9133fcb
+2026-06-02T07:46:09.413Z [ERROR] MCP client for github-mcp-server connected, took 1371ms
+2026-06-02T07:46:09.414Z [ERROR] Started MCP client for remote server github-mcp-server
+2026-06-02T07:46:09.415Z [ERROR] GitHub MCP server configured after authentication
+2026-06-02T07:46:09.463Z [INFO] Using default model: gpt-5.4
+2026-06-02T07:46:10.399Z [INFO] Memory enablement check: enabled
+2026-06-02T08:32:59.564Z [WARNING] Failed to parse lock file /Users/ryota/.copilot/ide/04036c01-812a-4ecd-9160-1ced2416a3a9.lock: Error: ENOENT: no such file or directory, open '/Users/ryota/.copilot/ide/04036c01-812a-4ecd-9160-1ced2416a3a9.lock'
+2026-06-02T20:06:23.818Z [INFO] Unregistering foreground session: 1f50e169-039a-4acf-a942-820831136100
+2026-06-02T20:06:24.824Z [ERROR] MCP transport for github-mcp-server closed
+2026-06-02T20:06:24.825Z [ERROR] MCP client for github-mcp-server closed

@@ -1,0 +1,9 @@
+{
+  "id": "1",
+  "subject": "Check recon results and locate AIUnitProvider source",
+  "description": "Read existing recon results (01-07 files), find AIUnitProvider.java in decompiled source",
+  "activeForm": "Reviewing recon results",
+  "status": "completed",
+  "blocks": [],
+  "blockedBy": []
+}

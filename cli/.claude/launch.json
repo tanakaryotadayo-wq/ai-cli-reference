@@ -1,0 +1,52 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "ryota-os-web",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev"],
+      "port": 3000,
+      "autoPort": true
+    },
+    {
+      "name": "penta-core-unified",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev"],
+      "port": 8888,
+      "cwd": "frontend"
+    },
+    {
+      "name": "backend-fastapi",
+      "runtimeExecutable": "/Users/ryota/backend/.venv/bin/granian",
+      "runtimeArgs": ["--interface", "asgi", "--host", "0.0.0.0", "--port", "8000", "--reload", "main:app"],
+      "port": 8000,
+      "cwd": "backend"
+    },
+    {
+      "name": "server-py",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": ["server.py"],
+      "port": 3005
+    },
+    {
+      "name": "ai-web",
+      "runtimeExecutable": "/Users/ryota/.venv/bin/granian",
+      "runtimeArgs": ["--interface", "asgi", "--host", "0.0.0.0", "--port", "5000", "--reload", "web:app"],
+      "port": 5000,
+      "cwd": "ai-web"
+    },
+    {
+      "name": "app-fastapi",
+      "runtimeExecutable": "/Users/ryota/.venv/bin/granian",
+      "runtimeArgs": ["--interface", "asgi", "--host", "0.0.0.0", "--port", "5050", "--reload", "app:app"],
+      "port": 5050
+    },
+    {
+      "name": "professor-app",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["start"],
+      "port": 5000,
+      "cwd": "professor-app"
+    }
+  ]
+}

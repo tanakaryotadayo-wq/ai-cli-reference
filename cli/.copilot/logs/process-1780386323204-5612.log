@@ -1,0 +1,5 @@
+2026-06-02T07:45:23.207Z [INFO] Shell completions: no writable completion directory found for zsh, skipping
+2026-06-02T07:45:23.216Z [INFO] Session indexing debug: SESSION_INDEXING=true, repository=undefined
+2026-06-02T07:45:24.389Z [ERROR] Request to Copilot Task API at https://api.individual.githubcopilot.com/agents/tasks/c4d84504-3803-4240-81e9-d42eaa590b72 failed with status 404 (request ID: C188:142C63:FEF940:111D374:6A1E8A14), body: {"documentation_url":"https://docs.github.com/rest","message":"not found"}
+
+2026-06-02T07:45:24.586Z [INFO] No update needed, current version is 1.0.57, fetched latest release is v1.0.57

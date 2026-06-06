@@ -1,0 +1,50 @@
+{
+  "projectRoot": "/Users/ryota",
+  "generatedAtMs": 1778229225487,
+  "currentSuggestionIds": [
+    "e8095fa9-34c8-4f70-9ed7-b1dfa0c82a82",
+    "9a7dfabc-10f7-4f78-9ce8-314d24b671d0",
+    "e8361dfc-90aa-4086-a7a1-518f798a1aac"
+  ],
+  "suggestions": [
+    {
+      "id": "e8095fa9-34c8-4f70-9ed7-b1dfa0c82a82",
+      "title": "Repair the PCC GitHub analyzer endpoint",
+      "description": "`/Users/ryota/pcc/backend/server.py` is currently half-broken around `/api/github`: the file has a malformed `try` block plus undefined `file_resp`, `path`, and `temp_path`, while the UI and README still advertise GitHub analysis. `pcc` was active on April 26, so this looks like a real open loop rather than stale code.",
+      "prompt": "`/Users/ryota/pcc` の GitHub解析を直して。`backend/server.py` の `/api/github` が今は壊れていて、`try` ブロックの崩れと未定義変数が残っている。エンドポイントを最後まで動く形に修正して、最低限の回帰テストも追加して。README/UIの期待値と実装がズレていたらそこも合わせて。",
+      "threadAction": {
+        "type": "new-thread"
+      },
+      "appIds": [],
+      "status": "pending",
+      "createdAtMs": 1778229225487,
+      "updatedAtMs": 1778229225487
+    },
+    {
+      "id": "9a7dfabc-10f7-4f78-9ce8-314d24b671d0",
+      "title": "Finish the DeepSeek solution lane",
+      "description": "`/Users/ryota/vortex-critic` では Apr 25 の未コミット変更で `deepseek-cli` を第3レーンとして足しかけていますが、`tests/test_gate.py` はまだ Gemini と Copilot しか見ていません。今のままだと“解決策建築家”レーンが半配線のまま残りやすいです。",
+      "prompt": "`/Users/ryota/vortex-critic` の DeepSeek solution architect レーンを着地させて。今の未コミット差分を前提に、`assets/critic/vortex-commit-gate.py` と `deepseek-critic.py` の wiring を整理して、dry-run JSON と pytest が `deepseek-cli` レーンまで検証するようにして。必要なら README の lane 説明も更新して。",
+      "threadAction": {
+        "type": "new-thread"
+      },
+      "appIds": [],
+      "status": "pending",
+      "createdAtMs": 1778229225487,
+      "updatedAtMs": 1778229225487
+    },
+    {
+      "id": "e8361dfc-90aa-4086-a7a1-518f798a1aac",
+      "title": "Add fusion-gate doctor and stop",
+      "description": "4月20日の“PCがラグい”系スレッドに対して、5月6日の `~/.fusion-gate.log` と `~/.vector-proxy.log` には Fusion Gate v4 と Vector Proxy v2 の起動が残っています。`/Users/ryota/fusion-gate` は大きいのに、今の home 運用だと常駐系を一発で診断・停止する入口が弱いです。",
+      "prompt": "`/Users/ryota/fusion-gate` に常駐プロセス用の `doctor` / `stop` 系コマンドを足して。Fusion Gate v4 と Vector Proxy v2 のログ・PID・ポート・DBパスをまとめて見れるようにして、不要なら安全に止められるようにしたい。今の home 配下のログ運用（`~/.fusion-gate.log`, `~/.vector-proxy.log` など）に合わせて、まず最小実装でいい。",
+      "threadAction": {
+        "type": "new-thread"
+      },
+      "appIds": [],
+      "status": "pending",
+      "createdAtMs": 1778229225487,
+      "updatedAtMs": 1778229225487
+    }
+  ]
+}

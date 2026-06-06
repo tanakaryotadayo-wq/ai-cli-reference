@@ -1,0 +1,10 @@
+version = 1
+id = "daily-logic"
+name = "Daily Logic"
+prompt = "Review the current shell/DB workspace and produce a concise daily logic brief that identifies duplicate concepts, conflicting drafts, what should be promoted to master, what should be archived, the next three highest-value implementation tasks, and the main risks. Prioritize preserving source-of-truth artifacts and reducing fragmentation."
+status = "PAUSED"
+rrule = "FREQ=WEEKLY;BYDAY=MO,TU,WE,TH,FR,SA,SU;BYHOUR=9;BYMINUTE=0"
+execution_environment = "worktree"
+cwds = ["/Users/ryota/pcc/ryota-db"]
+created_at = 1772807287115
+updated_at = 1773241105604

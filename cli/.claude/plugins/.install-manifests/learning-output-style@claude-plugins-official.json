@@ -1,0 +1,11 @@
+{
+  "pluginId": "learning-output-style@claude-plugins-official",
+  "createdAt": "2026-03-06T14:11:53.294Z",
+  "files": {
+    ".claude-plugin/plugin.json": "a737b2b6b79f54c69fd345813fe15a178d3ee2cbd06062d55318fc945620fc28",
+    "LICENSE": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+    "README.md": "3148b3552ce12e2e8fa73e00d914882ae60557b29ded502d22da633685e5bdbd",
+    "hooks/hooks.json": "595436e45533450f9961fadb9efc6826125383d1aa84b477a6d61778962ed487",
+    "hooks-handlers/session-start.sh": "2b2ef02fffeb9df6d587a3180ab3bb06e1364a75f70e2f534045b599b953731e"
+  }
+}
