@@ -1,0 +1,24 @@
+# Ruff configuration file (v1.1)
+
+exclude = [
+    ".git",
+    ".github",
+    ".venv",
+    "cli/.claude",
+    "cli/.codex",
+    "cli/.copilot",
+    "skills",
+]
+
+[lint]
+select = ["E", "F", "W"]
+# 既存のレガシーコードにおけるスタイル上の警告を安全に無視するための設定
+ignore = [
+    "E501",  # Line too long
+    "W291",  # Trailing whitespace
+    "W293",  # Blank line contains whitespace
+    "F401",  # Unused import
+    "F841",  # Unused local variable
+    "F541",  # f-string without placeholders
+    "E741",  # Ambiguous variable name
+]

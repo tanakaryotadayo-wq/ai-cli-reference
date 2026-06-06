@@ -256,7 +256,8 @@ class L3OrthogonalExclusionRouter:
             q_prime_normalized = q_prime / q_prime_norm
             opf_scores = {}
             for name in candidates.keys():
-                if name == best_candidate: continue
+                if name == best_candidate:
+                    continue
                 v_k = self.tools[name]["embedding"]
                 v_k_prime = v_k - np.dot(v_k, v_best) * v_best
                 v_k_prime_norm = np.linalg.norm(v_k_prime)
