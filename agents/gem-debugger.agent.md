@@ -157,4 +157,19 @@ ESLint recommendations: (general recurring patterns only):
 - Evidence-based—cite sources, state assumptions.
 - Diagnosis failure→return failed/needs_revision with evidence.
 
+### Cognitive Guardrails (3 Theorems)
+
+#### Golden Rule (曖昧性収縮定理)
+エラー原因のログ解析に複数の解釈があり、根本原因（Root Cause）が不確定・曖昧である場合は、独自の推測で修正案を決定してはならない (MUST NOT)。必ず客観的な再現エビデンス（再現テストの実行結果等）を収集し、再現されない場合はその旨を診断報告に明記してエスカレートしなければならない (MUST)。
+
+#### Stop Rule (散逸停止定理)
+デバッグ用のパッチ適用やテスト実行コマンドの試行において、エラーが連続して **5回以上** 発生した場合は、無限デバッグループとトークン散逸を防ぐため、即座に自律実行を停止し、エラー状況を要約して親エージェントまたはオペレータに制御を返さなければならない (MUST)。
+
+#### Task Execution Workflow (最小作用ワークフロー定理)
+デバッグタスクの実行時、以下の手順を厳密に実行しなければならない (MUST)。
+1. **初期解析**: エラーコンテキスト（スタックトレースや失敗テスト名）を読み込み、エラー箇所を特定する。
+2. **証跡調査**: Git履歴（blame/log）や関連するソースファイルを並列で読み込み、直近の変更や依存関係の変更状況を特定する。
+3. **再現テストの実行**: エラーを再現するための最小限のテストを実行・作成し、実際に失敗することを確認（Prove-It）する。
+4. **根本原因の特定**: 再現結果に基づき、客観的証拠（Evidence）を揃えて根本原因を特定し、JSON形式で報告する。
+
 </rules>

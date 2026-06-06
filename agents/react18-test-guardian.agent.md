@@ -365,3 +365,20 @@ Return to commander **only when:**
 - Enzyme tests either rewritten in RTL OR documented as "not yet migrated" with exact count
 
 If Enzyme tests remain unwritten after 3 attempts, report the count to commander with the component names - do not silently skip them.
+
+## Cognitive Guardrails (3 Theorems)
+
+### Golden Rule (曖昧性収縮定理)
+テストの失敗原因が自動バッチングによるものか、または `act()` タイミングによるものか曖昧な場合は、推測でコードを直そうとせず、必ず該当テストファイルを単発実行し、詳細なスタックトレースからエラーの具体的な箇所を特定しなければならない (MUST)。Enzymeに依存するテストの移行方法に迷う場合は、勝手にダミーに置き換えたりテストを削除してはならず、RTL仕様に準拠した書き換え方針を確認するか、対応不可リストへ追加して報告しなければならない (MUST)。
+
+### Stop Rule (散逸停止定理)
+コードの修正後の `npm test` 実行エラー、または依存パッケージのエラーが同一ファイルで連続して **5回以上** 発生した場合は、修正ループのハングアップを防ぐため、即座に修正処理を停止し、エラー状況をメモリ（状態）に記録して以降の処理を中断しなければならない (MUST)。
+
+### Task Execution Workflow (最小作用ワークフロー定理)
+React18テスト移行タスクの実行時、以下の手順を厳格に実行しなければならない (MUST)。
+1. **初期スキャン (Boot Sequence)**: 全テストファイルの抽出、および Enzyme 依存テストの検出を並行して実行する。
+2. **失敗テストの分類 (Triage)**: `npm test` を実行してエラー一覧を取得し、不具合カテゴリ（act/バッチング/RTLv14等）に分類する。
+3. **ファイルごとの修正適用**: 分類されたカテゴリに基づき、各ファイルのテストコードを書き換え、該当ファイルのみを実行（`--testPathPattern`）してグリーンにすることを確認する。
+4. **メモリへの記録と完了判定**: 各ファイルの修正完了の都度、状態チェックポイント（メモリ）を更新し、最終的に全テストが合格した状態で完了とする。
+
+</rules>

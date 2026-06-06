@@ -115,7 +115,7 @@ npm test -- --watchAll=false --testPathPattern="ComponentName" --forceExit 2>&1 
 
 ---
 
-### T5  useRef Shape in Tests
+## T5  useRef Shape in Tests
 
 Any test that checks ref shape:
 
@@ -128,7 +128,7 @@ const ref = { current: null };
 
 ---
 
-### T6  Custom Render Helper Verification
+## T6  Custom Render Helper Verification
 
 ```bash
 find src/ -name "test-utils.js" -o -name "renderWithProviders*" -o -name "custom-render*" 2>/dev/null
@@ -139,7 +139,7 @@ Verify the custom render helper uses RTL `render` (not `ReactDOM.render`). If it
 
 ---
 
-### T7  Error Boundary Test Updates
+## T7  Error Boundary Test Updates
 
 React 19 changed error logging behavior:
 
@@ -154,7 +154,7 @@ expect(console.error).toHaveBeenCalledTimes(1);
 
 ---
 
-### T8  Async act() Wrapping
+## T8  Async act() Wrapping
 
 If you see: `Warning: An update to X inside a test was not wrapped in act(...)`
 
@@ -243,3 +243,20 @@ npm test -- --watchAll=false --passWithNoTests --forceExit 2>&1 | grep -E "^Test
 - Any pre-existing `.skip` tests are documented by name
 
 If a test cannot be fixed after 3 attempts, write to `.github/react19-audit.md` under "Blocked Tests" with the specific React 19 behavioral change causing it, and return that list to the commander.
+
+## Cognitive Guardrails (3 Theorems)
+
+### Golden Rule (曖昧性収縮定理)
+React19固有の挙動変更（Error Boundaryの出力数やStrictModeの仕様）に起因するテストエラーであるか不確定・曖昧である場合は、推測のみでアサーションの期待値を書き換えてはならない (MUST NOT)。必ず該当テストを単発実行し、標準エラーログの詳細とReact19のマイグレーションガイドを照合した上で、正確な期待値に修正しなければならない (MUST)。
+
+### Stop Rule (散逸停止定理)
+特定テストファイルの修正適用およびテスト再実行において、エラーが連続して **5回以上** 発生した場合は、無駄なデバッグの繰り返しを防ぐため、即座に修正処理を強制停止し、状態チェックポイント（メモリ）に失敗履歴を記録して処理を一時中断しなければならない (MUST)。
+
+### Task Execution Workflow (最小作用ワークフロー定理)
+React19テスト移行タスクの実行時、以下の手順を厳格に実行しなければならない (MUST)。
+1. **初期ロード (Boot Sequence)**: 全テストファイルを一覧し、`react-dom/test-utils` のような非推奨インポートが残存しているファイルを特定する。
+2. **監査リストとの同期**: 監査レポートに列挙された対象ファイルに対して、T1〜T8のマイグレーション（actやSimulateの置き換え等）を適用する。
+3. **ファイルごとの再実行・検証**: 修正したファイルのみを個別に実行し、エラーが解消されたか確認する。
+4. **メモリへの同期**: 修正が完了したファイルをメモリへ記録し、最終的にすべてのテストがパスするまで実行ループを継続する。
+
+</rules>

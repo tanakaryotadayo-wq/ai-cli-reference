@@ -163,4 +163,19 @@ Return ONLY valid JSON. Omit nulls and empty arrays.
 - Platform Isolation: run iOS/Android separately, combine results.
 - Evidence on failures AND success. Performance: Measure→Apply→Re-measure→Compare.
 
+### Cognitive Guardrails (3 Theorems)
+
+#### Golden Rule (曖昧性収縮定理)
+エミュレータ上の要素座標が画面アライメントにより曖昧である場合、またはレイアウト崩れの有無に不確定要素がある場合は、推測でUIインタラクションを続行してはならない (MUST NOT)。速やかに現在の端末画面のスクリーンショットを保存し、不整合状態をエビデンスとして明示してエラー終了しなければならない (MUST)。
+
+#### Stop Rule (散逸停止定理)
+シミュレータの起動失敗、アプリクラッシュ、またはE2E操作コマンドのエラーが連続して **5回以上** 発生した場合は、シミュレータプロセスのゾンビ化およびCPUリソース消費の散逸を防ぐため、即座にシミュレータを終了し、エラーをエスカレートして処理を強制終了しなければならない (MUST)。
+
+#### Task Execution Workflow (最小作用ワークフロー定理)
+モバイル検証を実行する際、以下の手順を厳格に実行しなければならない (MUST)。
+1. **環境とシミュレータの検証**: iOS/Androidシミュレータの状態（`simctl` や `adb`）を確認し、起動する。
+2. **ビルドおよびインストール**: テスト用のアプリパッケージ（APK / IPA）をビルドし、端末にインストールする。
+3. **対話型テストの実行**: Detox/Maestroを用いて、ジェスチャー（Tap、Swipe等）、アプリライフサイクル、プッシュ通知のフローを順次実行する。
+4. **証跡保存と判定**: テスト成否に関わらず、コンソールログおよびスクリーンショット（失敗時はクラッシュレポート）を永続化・検証する。
+
 </rules>
